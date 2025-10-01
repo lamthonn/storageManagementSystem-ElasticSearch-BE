@@ -1,0 +1,60 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.34928.147
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DATN.Api", "DATN.Api\DATN.Api.csproj", "{5380B832-13D6-4C0E-823F-5CA66B99DF58}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DATN", "DATN", "{8448C5DD-F20A-48B6-88DA-53A1E6EE4199}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MAHOA", "MAHOA", "{38CC84D6-8A72-4DB4-8353-76142EBF6B2B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DATN.Application", "DATN.Application\DATN.Application.csproj", "{89F2519E-03CB-4AD7-9517-5072B1DB8884}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DATN.Domain", "DATN.Domain\DATN.Domain.csproj", "{73D92CDD-9EBC-405E-B384-42CBA4F133C1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DATN.Infrastructure", "DATN.Infrastructure\DATN.Infrastructure.csproj", "{C34159D1-97EC-4AA5-8924-8EC927150203}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MaHoa.Application", "MaHoa.Application\MaHoa.Application.csproj", "{E985AB9B-0440-4A92-AECD-6D5AF6C1AD39}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5380B832-13D6-4C0E-823F-5CA66B99DF58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5380B832-13D6-4C0E-823F-5CA66B99DF58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5380B832-13D6-4C0E-823F-5CA66B99DF58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5380B832-13D6-4C0E-823F-5CA66B99DF58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89F2519E-03CB-4AD7-9517-5072B1DB8884}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89F2519E-03CB-4AD7-9517-5072B1DB8884}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89F2519E-03CB-4AD7-9517-5072B1DB8884}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89F2519E-03CB-4AD7-9517-5072B1DB8884}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73D92CDD-9EBC-405E-B384-42CBA4F133C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73D92CDD-9EBC-405E-B384-42CBA4F133C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73D92CDD-9EBC-405E-B384-42CBA4F133C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73D92CDD-9EBC-405E-B384-42CBA4F133C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C34159D1-97EC-4AA5-8924-8EC927150203}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C34159D1-97EC-4AA5-8924-8EC927150203}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C34159D1-97EC-4AA5-8924-8EC927150203}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C34159D1-97EC-4AA5-8924-8EC927150203}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E985AB9B-0440-4A92-AECD-6D5AF6C1AD39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E985AB9B-0440-4A92-AECD-6D5AF6C1AD39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E985AB9B-0440-4A92-AECD-6D5AF6C1AD39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E985AB9B-0440-4A92-AECD-6D5AF6C1AD39}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5380B832-13D6-4C0E-823F-5CA66B99DF58} = {8448C5DD-F20A-48B6-88DA-53A1E6EE4199}
+		{89F2519E-03CB-4AD7-9517-5072B1DB8884} = {8448C5DD-F20A-48B6-88DA-53A1E6EE4199}
+		{73D92CDD-9EBC-405E-B384-42CBA4F133C1} = {8448C5DD-F20A-48B6-88DA-53A1E6EE4199}
+		{C34159D1-97EC-4AA5-8924-8EC927150203} = {8448C5DD-F20A-48B6-88DA-53A1E6EE4199}
+		{E985AB9B-0440-4A92-AECD-6D5AF6C1AD39} = {38CC84D6-8A72-4DB4-8353-76142EBF6B2B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6C6ACFA7-4CBB-4FEC-B81C-3E7F53174621}
+	EndGlobalSection
+EndGlobal
