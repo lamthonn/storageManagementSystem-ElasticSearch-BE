@@ -37,6 +37,17 @@ namespace DATN.Application.Utils
             return (userId!= null ? userId.ToString() :null, userName != null ? userName.ToString() : null);
         }
 
+        //HASH FILE
+        public static string ComputeFileHash(IFormFile file)
+        {
+            using (var sha256 = SHA256.Create())
+            using (var stream = file.OpenReadStream())
+            {
+                var hashBytes = sha256.ComputeHash(stream);
+                return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+            }
+        }
+
         public string GetPBKDF2(string password, byte[] salt, int iterations = 10000)
         {
             using (var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256))

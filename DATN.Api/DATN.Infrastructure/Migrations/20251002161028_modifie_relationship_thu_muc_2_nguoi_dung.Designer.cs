@@ -4,6 +4,7 @@ using DATN.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DATN.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251002161028_modifie_relationship_thu_muc_2_nguoi_dung")]
+    partial class modifie_relationship_thu_muc_2_nguoi_dung
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -479,9 +482,12 @@ namespace DATN.Infrastructure.Migrations
                     b.Property<Guid?>("thu_muc_id")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid>("thu_mucid")
+                        .HasColumnType("char(36)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("thu_muc_id");
+                    b.HasIndex("thu_mucid");
 
                     b.ToTable("tai_lieu");
                 });
@@ -654,7 +660,9 @@ namespace DATN.Infrastructure.Migrations
                 {
                     b.HasOne("DATN.Domain.Entities.thu_muc", "thu_muc")
                         .WithMany("ds_tai_lieu")
-                        .HasForeignKey("thu_muc_id");
+                        .HasForeignKey("thu_mucid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("thu_muc");
                 });

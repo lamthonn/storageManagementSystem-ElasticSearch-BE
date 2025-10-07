@@ -27,6 +27,14 @@ namespace DATN.Application.Utils
             var items = await source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
             return new PaginatedList<T>(items, count, pageNumber, pageSize);
         }
+
+        public static Task<PaginatedList<T>> CreateToList(List<T> source, int pageNumber, int pageSize)
+        {
+            var count = source.Count;
+            pageNumber = Math.Max(pageNumber, 1); // Đảm bảo pageNumber >= 1
+            var items = source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+            return Task.FromResult(new PaginatedList<T>(items, count, pageNumber, pageSize));
+        }
     }
 
 }

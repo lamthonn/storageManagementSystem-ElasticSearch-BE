@@ -35,6 +35,7 @@ namespace DATN.Domain.Entities
         public virtual ICollection<nguoi_dung_2_nhom_nguoi_dung> ds_nhom_nguoi_dung { get; set; }
         public virtual ICollection<nguoi_dung_2_danh_muc> ds_phong_ban { get; set; }
         public virtual ICollection<tai_lieu_2_nguoi_dung> ds_tai_lieu { get; set; }
+        public virtual ICollection<thu_muc> ds_thu_muc { get; set; }
 
 
     }

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,7 +27,7 @@ namespace DATN.Domain.Entities
         public string? FileType { get; set; } //(mime type: pdf, docx, jpg…).
         public long FileSize { get; set; } //(dung lượng).
         public string? FileHash { get; set; } //(MD5/SHA256) → để kiểm tra trùng file.
-        public string? Status { get; set; } // trạng thái: uploaded, indexed...
+        public string? Status { get; set; } // trạng thái: uploaded, shared...
 
         // Phục vụ ElasticSearch
         public string? ContentText { get; set; }    // nội dung text trích xuất từ file
@@ -34,6 +35,10 @@ namespace DATN.Domain.Entities
         public string? IndexStatus { get; set; } // (chưa index / thành công / lỗi).
         #endregion
 
-
+        #region Cập nhật 01/10/2025
+        public Guid? thu_muc_id { get; set; } // id của folder đang lưu trữ5420
+        [ForeignKey(nameof(thu_muc_id))]
+        public virtual thu_muc thu_muc { get; set; }
+        #endregion
     }
 }

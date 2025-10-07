@@ -4,6 +4,7 @@ using DATN.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DATN.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251001165502_modifie_Add_thu_muc")]
+    partial class modifie_Add_thu_muc
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -479,9 +482,12 @@ namespace DATN.Infrastructure.Migrations
                     b.Property<Guid?>("thu_muc_id")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid>("thu_mucid")
+                        .HasColumnType("char(36)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("thu_muc_id");
+                    b.HasIndex("thu_mucid");
 
                     b.ToTable("tai_lieu");
                 });
@@ -522,9 +528,6 @@ namespace DATN.Infrastructure.Migrations
                     b.Property<string>("nguoi_chinh_sua")
                         .HasColumnType("longtext");
 
-                    b.Property<Guid>("nguoi_dung_id")
-                        .HasColumnType("char(36)");
-
                     b.Property<string>("nguoi_tao")
                         .HasColumnType("longtext");
 
@@ -536,8 +539,6 @@ namespace DATN.Infrastructure.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("id");
-
-                    b.HasIndex("nguoi_dung_id");
 
                     b.ToTable("thu_muc");
                 });
@@ -654,7 +655,9 @@ namespace DATN.Infrastructure.Migrations
                 {
                     b.HasOne("DATN.Domain.Entities.thu_muc", "thu_muc")
                         .WithMany("ds_tai_lieu")
-                        .HasForeignKey("thu_muc_id");
+                        .HasForeignKey("thu_mucid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("thu_muc");
                 });
@@ -676,17 +679,6 @@ namespace DATN.Infrastructure.Migrations
                     b.Navigation("nguoi_dung");
 
                     b.Navigation("tai_lieu");
-                });
-
-            modelBuilder.Entity("DATN.Domain.Entities.thu_muc", b =>
-                {
-                    b.HasOne("DATN.Domain.Entities.nguoi_dung", "Nguoi_dung")
-                        .WithMany("ds_thu_muc")
-                        .HasForeignKey("nguoi_dung_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Nguoi_dung");
                 });
 
             modelBuilder.Entity("DATN.Domain.Entities.danh_muc", b =>
@@ -719,8 +711,6 @@ namespace DATN.Infrastructure.Migrations
                     b.Navigation("ds_phong_ban");
 
                     b.Navigation("ds_tai_lieu");
-
-                    b.Navigation("ds_thu_muc");
                 });
 
             modelBuilder.Entity("DATN.Domain.Entities.nhom_nguoi_dung", b =>

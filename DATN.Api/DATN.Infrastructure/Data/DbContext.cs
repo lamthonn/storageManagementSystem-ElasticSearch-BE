@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<nhom_nguoi_dung_2_command> nhom_nguoi_dung_2_command { get; set; }
     public DbSet<nhom_nguoi_dung_2_dieu_huong> nhom_nguoi_dung_2_dieu_huong { get; set; }
     public DbSet<tai_lieu> tai_lieu { get; set; }
+    public DbSet<thu_muc> thu_muc { get; set; }
     public DbSet<tai_lieu_2_nguoi_dung> tai_lieu_2_nguoi_dung { get; set; }
 
 

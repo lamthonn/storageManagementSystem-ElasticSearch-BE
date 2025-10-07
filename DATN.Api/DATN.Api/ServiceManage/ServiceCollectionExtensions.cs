@@ -9,6 +9,8 @@ using DATN.Application.DieuHuong;
 using DATN.Application.Utils;
 using DATN.Application.NguoiDung;
 using DATN.Application.NhatKyHeThong;
+using DATN.Application.ThuMuc;
+using DATN.Application.TaiLieu;
 
 namespace DATN.Api.ServiceManage
 {
@@ -25,6 +27,8 @@ namespace DATN.Api.ServiceManage
             services.AddTransient<IDieuHuong, DieuHuongService>();
             services.AddTransient<INguoiDung, NguoiDungService>();
             services.AddTransient<INhatKyHeThong, NhatKyHeThongService>();
+            services.AddTransient<IThuMucService, ThuMucService>();
+            services.AddTransient<ITaiLieuService, TaiLieuService>();
 
             return services;
         }
