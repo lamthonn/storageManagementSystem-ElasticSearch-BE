@@ -580,5 +580,17 @@ namespace DATN.Application.NguoiDung
                 throw new Exception(ex.Message);
             }
         }
+
+        public async Task<List<nguoi_dung_dto>> GetAllNguoiDungByPhongBan(nguoiDungPaginParams? request)
+        {
+            try
+            {
+                return null;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
     }
 }

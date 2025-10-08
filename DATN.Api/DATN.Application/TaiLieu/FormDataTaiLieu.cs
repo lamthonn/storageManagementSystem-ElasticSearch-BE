@@ -27,6 +27,7 @@ namespace DATN.Application.TaiLieu
         public string? extension { get; set; } // extension
         public int? loai_tai_lieu { get; set; } // 1:tài liệu (word) || 2: Bảng tính (Excel) || 3: PDF || 4: Hình ảnh
         public string? plain_text { get; set; } // đường dẫn file
+        public Guid? thu_muc_id { get; set; }
     }
 
     public class ResultSearchParams : PaginParams  // kết quả tìm kiếm
@@ -42,7 +43,8 @@ namespace DATN.Application.TaiLieu
         public DateTime? ngay_tao_from { get; set; } 
         public DateTime? ngay_tao_to { get; set; } 
         public DateTime? ngay_chinh_sua_from { get; set; } 
-        public DateTime? ngay_chinh_sua_to { get; set; } 
+        public DateTime? ngay_chinh_sua_to { get; set; }
+        public Guid? thu_muc_id { get; set; }
 
     }
 }

@@ -45,5 +45,6 @@ namespace DATN.Domain.DTO
         public string? so_dien_thoai { get; set; }
         public bool? gioi_tinh { get; set; }
         public bool? trang_thai { get; set; }
+        public List<Guid>? ds_phong_ban_id { get; set; }
     }
 }

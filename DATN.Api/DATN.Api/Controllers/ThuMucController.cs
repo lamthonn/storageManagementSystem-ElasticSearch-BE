@@ -46,6 +46,21 @@ namespace DATN.Api.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
+        
+        [HttpPost("get-many")]
+        [Authorize]
+        public async Task<ActionResult<List<thu_muc_dto>>> GetMany([FromBody]List<Guid> ids)
+        {
+            try
+            {
+                var result = await _service.GetManyThuMuc(ids);
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
 
         [HttpPut("")]
         [Authorize]

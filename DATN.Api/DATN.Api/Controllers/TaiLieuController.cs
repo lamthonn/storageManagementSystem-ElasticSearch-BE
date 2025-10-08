@@ -97,8 +97,24 @@ namespace DATN.Api.Controllers
         }
         #endregion
 
+        #region api download tài liệu
+        [HttpGet("get-docs-by-folder")]
+        public async Task<PaginatedList<ResultSearch>> GetDocsByFolder([FromQuery] ResultSearchParams requests)
+        {
+            try
+            {
+                var result = await _taiLieuService.GetDocsByFolder(requests);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        #endregion
+
         #region api chia sẻ tài liệu
-        
+
         #endregion
 
     }

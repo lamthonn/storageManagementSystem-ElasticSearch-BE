@@ -100,7 +100,28 @@ namespace DATN.Application.ThuMuc
         {
             try
             {
-                var dsThuMuc =_context.thu_muc.Where(x=> x.nguoi_dung_id == nguoi_dung_id);
+                var dsThuMuc =_context.thu_muc.Where(x=> x.nguoi_dung_id == nguoi_dung_id && x.thu_muc_cha_id == null);
+                var result = dsThuMuc.Select(x => new thu_muc_dto
+                {
+                    id = x.id,
+                    ten = x.ten,
+                    nguoi_dung_id = x.nguoi_dung_id,
+                    thu_muc_cha_id = x.thu_muc_cha_id,
+                    ngay_tao = x.ngay_tao,
+                }).OrderBy(x => x.ngay_tao).ToList();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public Task<List<thu_muc_dto>> GetManyThuMuc(List<Guid> ids)
+        {
+            try
+            {
+                var dsThuMuc = _context.thu_muc.Where(x => ids.Contains(x.id));
                 var result = dsThuMuc.Select(x => new thu_muc_dto
                 {
                     id = x.id,
@@ -109,7 +130,7 @@ namespace DATN.Application.ThuMuc
                     thu_muc_cha_id = x.thu_muc_cha_id,
                     ngay_tao = x.ngay_tao,
                 }).ToList();
-                return result;
+                return Task.FromResult(result);
             }
             catch (Exception ex)
             {

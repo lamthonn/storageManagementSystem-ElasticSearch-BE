@@ -17,6 +17,6 @@ namespace DATN.Application.Interfaces
         Task<PaginatedList<ResultSearch>> GetDataSearch(ResultSearchParams request);
         Task<List<nguoi_dung_dto>> GetAllNguoiDungByDocs(Guid currentUserId); // lấy tất cả người dùng có tài liệu được chia sẻ với mình
         Task<DownloadResult> HandleDownloadTaiLieu(Guid idTaiLieu); // lấy tất cả người dùng có tài liệu được chia sẻ với mình
-        Task<PaginatedList<ResultSearch>> GetDocsByFolder(Guid folder_id);
+        Task<PaginatedList<ResultSearch>> GetDocsByFolder(ResultSearchParams request);
     }
 }

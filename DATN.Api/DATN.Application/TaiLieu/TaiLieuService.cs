@@ -364,7 +364,7 @@ namespace DATN.Application.TaiLieu
                 result.AddRange(dsTaiLieuShare);
 
                 // ds thư mục
-                var dsThuMuc = _context.thu_muc.Where(x => x.nguoi_tao == currentUser.tai_khoan).Select(x => new ResultSearch
+                var dsThuMuc = _context.thu_muc.Where(x => x.nguoi_tao == currentUser.tai_khoan && x.thu_muc_cha_id == null).Select(x => new ResultSearch
                 {
                     is_folder = true,
                     ten = x.ten,
@@ -505,9 +505,122 @@ namespace DATN.Application.TaiLieu
             }
         }
 
-        public Task<PaginatedList<ResultSearch>> GetDocsByFolder(Guid folder_id)
+        public async Task<PaginatedList<ResultSearch>> GetDocsByFolder(ResultSearchParams request)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if(request.thu_muc_id == null)
+                {
+                    throw new Exception("Chưa chọn thư mục");
+                }
+                var docs = _context.tai_lieu.Where(x => x.thu_muc_id == request.thu_muc_id).ToList();
+                var folders = _context.thu_muc.Where(x => x.thu_muc_cha_id == request.thu_muc_id).ToList();
+                var result = new List<ResultSearch>();
+                var currentUser = _context.nguoi_dung.FirstOrDefault(x => x.Id == request.current_user_id);
+                if (currentUser == null)
+                {
+                    throw new Exception("Không tìm thấy người dùng.");
+                }
+
+                // ds tài liệu
+                var dsTaiLieu = docs.Where(x => x.nguoi_tao == currentUser.tai_khoan).Select(x => new ResultSearch
+                {
+                    is_folder = false,
+                    ten = x.ten,
+                    ngay_sua_doi = x.ngay_chinh_sua ?? x.ngay_tao,
+                    ngay_tao = x.ngay_tao,
+                    kich_co_tep = x.FileSize,
+                    ten_chu_so_huu = x.nguoi_tao,
+                    loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
+                    plain_text = x.ContentText,
+                    extension = x.FileType,
+
+                });
+                result.AddRange(dsTaiLieu);
+
+                //ds được chia sẻ với tôi
+                var shareDocs = _context.tai_lieu_2_nguoi_dung.Where(x => x.nguoi_dung_id == currentUser.Id).Select(x => x.tai_lieu_id);
+                var dsTaiLieuShare = docs.Where(x => shareDocs.Contains(x.Id)).Select(x => new ResultSearch
+                {
+                    is_folder = false,
+                    ten = x.ten,
+                    ngay_sua_doi = x.ngay_chinh_sua ?? x.ngay_tao,
+                    ngay_tao = x.ngay_tao,
+                    kich_co_tep = x.FileSize,
+                    ten_chu_so_huu = x.nguoi_tao,
+                    loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
+                    plain_text = x.ContentText,
+                    extension = x.FileType
+                });
+                result.AddRange(dsTaiLieuShare);
+
+                // ds thư mục
+                var dsThuMuc = folders.Where(x => x.nguoi_tao == currentUser.tai_khoan).Select(x => new ResultSearch
+                {
+                    is_folder = true,
+                    ten = x.ten,
+                    ngay_tao = x.ngay_tao,
+                    ngay_sua_doi = x.ngay_chinh_sua ?? x.ngay_tao,
+                    ten_chu_so_huu = x.nguoi_tao,
+                });
+                result.AddRange(dsThuMuc);
+
+
+                // QUERY -- QUERY -- QUERY
+                if (request.keySearch != null)
+                {
+                    result = result.Where(x => x.ten != null && x.ten.ToLower().Contains(request.keySearch.ToLower())).ToList(); //chỉ lấy file
+                }
+                if (request.loai_tai_lieu != null && request.loai_tai_lieu != 0)
+                {
+                    if (request.loai_tai_lieu == 5)// thư mục
+                    {
+                        result = result.Where(x => x.is_folder == true).ToList(); //chỉ lấy thư mục
+                    }
+                    else
+                    {
+                        result = result.Where(x => x.loai_tai_lieu == request.loai_tai_lieu && x.is_folder == false).ToList(); //chỉ lấy file
+                    }
+                }
+                if (request.trang_thai != null)
+                {
+                    result = result.Where(x => (request.trang_thai == 1 ? x.ten_chu_so_huu == currentUser.tai_khoan : (request.trang_thai == 2 ? x.ten_chu_so_huu != currentUser.tai_khoan : true))).ToList();
+                }
+                if (request.nguoi_dung_id != null)
+                {
+                    var nguoiDung = _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id);
+                    if (nguoiDung != null)
+                    {
+                        result = result.Where(x => x.ten_chu_so_huu == nguoiDung.tai_khoan).ToList();
+                    }
+                }
+                if (request.keyWord != null)
+                {
+                    result = result.Where(x => x.plain_text != null && x.plain_text.Contains(request.keyWord)).ToList();
+                }
+                if (request.ten_muc != null)
+                {
+                    result = result.Where(x => x.ten != null && x.ten.ToLower().Contains(request.ten_muc.ToLower())).ToList();
+                }
+                if (request.ngay_tao_from != null && request.ngay_tao_to != null)
+                {
+                    result = result.Where(x => x.ngay_sua_doi != null && x.ngay_sua_doi >= request.ngay_tao_from.Value.AddHours(7) && x.ngay_sua_doi <= request.ngay_tao_to.Value.AddHours(7)).ToList();
+                }
+                if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
+                {
+                    result = result.Where(x => x.ngay_sua_doi != null && x.ngay_sua_doi >= request.ngay_chinh_sua_from.Value.AddHours(7) && x.ngay_sua_doi <= request.ngay_chinh_sua_to.Value.AddHours(7)).ToList();
+                }
+
+                //sort (folder trước - file sau) && sắp xếp theo ngày sửa đổi gần nhất
+                result = result.OrderByDescending(x => x.is_folder).ThenByDescending(x => x.ngay_sua_doi).ToList();
+                var resultPagin = await PaginatedList<ResultSearch>.CreateToList(result, request.pageNumber, request.pageSize);
+
+                return resultPagin;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            } 
         }
     }
 }
