@@ -137,6 +137,7 @@ namespace DATN.Application.NguoiDung
                 var result = new nguoi_dung_dto
                 {
                     id = id,
+                    ten_nhom_nguoi_dung = dsNND.FirstOrDefault(x => x.mac_dinh == true)?.ten ?? "",
                     tai_khoan = nguoiDung.tai_khoan,
                     ten = nguoiDung.ten,
                     ngay_sinh = nguoiDung.ngay_sinh,
@@ -581,11 +582,69 @@ namespace DATN.Application.NguoiDung
             }
         }
 
-        public async Task<List<nguoi_dung_dto>> GetAllNguoiDungByPhongBan(nguoiDungPaginParams? request)
+        public async Task<List<nguoi_dung_dto>> GetAllNguoiDungByPhongBan(Guid nguoi_dung_id, Guid tai_lieu_id)
         {
             try
             {
-                return null;
+                var dsNguoiDungIntaiLieu = _context.tai_lieu_2_nguoi_dung.Where(x => x.tai_lieu_id == tai_lieu_id).Select(x => x.nguoi_dung_id);
+                var dsPhongBan = _context.nguoi_dung_2_danh_muc.Where(x => x.nguoi_dung_id == nguoi_dung_id).Select(x => x.danh_muc_id).ToList();
+                var dsNguoiDungIdInPB = _context.nguoi_dung_2_danh_muc.Where(x => dsPhongBan != null && dsPhongBan.Contains(x.danh_muc_id) && !dsNguoiDungIntaiLieu.Contains(x.nguoi_dung_id)).Select(x => x.nguoi_dung_id);
+                if(dsNguoiDungIdInPB != null)
+                {
+                    var dsNguoiDung = await _context.nguoi_dung.Where(x => dsNguoiDungIdInPB.Contains(x.Id) && x.Id != nguoi_dung_id).Select(x => new nguoi_dung_dto
+                    {
+                        id = x.Id,
+                        tai_khoan = x.tai_khoan,
+                        ten = x.ten,
+                        ngay_sinh = x.ngay_sinh,
+                        email = x.email,
+                        so_dien_thoai = x.so_dien_thoai,
+                        gioi_tinh = x.gioi_tinh,
+                        trang_thai = x.trang_thai,
+                    }).ToListAsync();
+
+                    return dsNguoiDung;
+                }
+                else
+                {
+                    var result = new List<nguoi_dung_dto>();
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        
+        
+        public async Task<List<nguoi_dung_dto>> GetDsNguoiDungInDocs(Guid tai_lieu_id)
+        {
+            try
+            {
+                var currentUser = _helper.GetUserInfo().userId;
+                var dsNguoiDungId = _context.tai_lieu_2_nguoi_dung.Where(x => x.tai_lieu_id == tai_lieu_id).Select(x => x.nguoi_dung_id);
+                if(dsNguoiDungId != null)
+                {
+                    var dsNguoiDung = await _context.nguoi_dung.Where(x => dsNguoiDungId.Contains(x.Id) || x.Id.ToString() == currentUser).Select(x => new nguoi_dung_dto
+                    {
+                        id = x.Id,
+                        tai_khoan = x.tai_khoan,
+                        ten = x.Id.ToString() == currentUser ? $"{x.ten} (Tôi)" : x.ten,
+                        ngay_sinh = x.ngay_sinh,
+                        email = x.email,
+                        so_dien_thoai = x.so_dien_thoai,
+                        gioi_tinh = x.gioi_tinh,
+                        trang_thai = x.trang_thai,
+                        ten_nhom_nguoi_dung = _context.nhom_nguoi_dung.FirstOrDefault(nnd => nnd.Id == _context.nguoi_dung_2_nhom_nguoi_dung.FirstOrDefault(a => a.nguoi_dung_id == x.Id)!.nhom_nguoi_dung_id)!.ten
+                    }).ToListAsync();
+
+                    return dsNguoiDung;
+                }
+                else
+                {
+                    return new List<nguoi_dung_dto>();
+                }
             }
             catch (Exception ex)
             {

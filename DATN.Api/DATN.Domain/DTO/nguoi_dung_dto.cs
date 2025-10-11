@@ -25,6 +25,7 @@ namespace DATN.Domain.DTO
         public string? RefreshToken { get; set; } // Lưu Refresh Token
         public DateTime? RefreshTokenExpiryTime { get; set; } // Hạn sử dụng của Refresh Token
         public bool? trang_thai { get; set; }
+        public string? ten_nhom_nguoi_dung { get; set; }
         public List<nguoi_dung_2_nhom_nguoi_dung_dto>? ds_nhom_nguoi_dung { get; set; }
         public List<danh_muc_dto>? ds_phong_ban { get; set; }
         public List<Guid>? ds_id_phong_ban { get; set; }

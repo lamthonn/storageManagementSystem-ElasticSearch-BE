@@ -210,5 +210,51 @@ namespace DATN.Api.Controllers
             }
         }
         #endregion
+        
+        
+        #region API get ds người dùng phòng ban
+        /// <summary>
+        /// Thêm mới người dùng
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpGet("get-colleague")]
+        [Authorize]
+        public async Task<IActionResult> GetAllNguoiDungByPhongBan(Guid nguoi_dung_id, Guid tai_lieu_id)
+        {
+            try
+            {
+                var result = await _nguoiDungService.GetAllNguoiDungByPhongBan(nguoi_dung_id, tai_lieu_id);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        #endregion
+        
+        
+        #region API get ds người dùng đã được chia sẻ tài liệu
+        /// <summary>
+        /// Thêm mới người dùng
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpGet("get-user-by-doc")]
+        [Authorize]
+        public async Task<IActionResult> GetDsNguoiDungInDocs(Guid tai_lieu_id)
+        {
+            try
+            {
+                var result = await _nguoiDungService.GetDsNguoiDungInDocs(tai_lieu_id);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        #endregion
     }
 }

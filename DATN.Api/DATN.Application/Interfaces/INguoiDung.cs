@@ -12,7 +12,8 @@ namespace DATN.Application.Interfaces
     public interface INguoiDung
     {
         Task<List<nguoi_dung_dto>> GetAllNguoiDung(string? keySearch);
-        Task<List<nguoi_dung_dto>> GetAllNguoiDungByPhongBan(nguoiDungPaginParams? request);
+        Task<List<nguoi_dung_dto>> GetAllNguoiDungByPhongBan(Guid nguoi_dung_id, Guid tai_lieu_id);
+        Task<List<nguoi_dung_dto>> GetDsNguoiDungInDocs(Guid tai_lieu_id); // người dùng được chia sẻ tài liệu
         Task<PaginatedList<nguoi_dung_dto>> GetPaginNguoiDung(nguoiDungPaginParams request);
         Task<nguoi_dung_dto> GetNguoiDungyId(Guid id);
         Task<List<nguoi_dung_dto>> GetNguoiDungyIds(List<Guid> ids);

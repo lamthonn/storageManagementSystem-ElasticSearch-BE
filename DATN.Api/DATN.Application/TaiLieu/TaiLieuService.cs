@@ -332,8 +332,9 @@ namespace DATN.Application.TaiLieu
                 }
 
                 // ds tài liệu
-                var dsTaiLieu = _context.tai_lieu.Where(x=> x.nguoi_tao == currentUser.tai_khoan).Select( x => new ResultSearch
+                var dsTaiLieu = _context.tai_lieu.Where(x=> x.nguoi_tao == currentUser.tai_khoan && x.thu_muc_id == null).Select( x => new ResultSearch
                 {
+                    id = x.Id,
                     is_folder = false,
                     ten = x.ten,
                     ngay_sua_doi = x.ngay_chinh_sua ?? x.ngay_tao,
@@ -351,6 +352,7 @@ namespace DATN.Application.TaiLieu
                 var shareDocs = _context.tai_lieu_2_nguoi_dung.Where(x => x.nguoi_dung_id == currentUser.Id).Select(x => x.tai_lieu_id);
                 var dsTaiLieuShare = _context.tai_lieu.Where(x => shareDocs.Contains(x.Id)).Select(x => new ResultSearch
                 {
+                    id = x.Id,
                     is_folder = false,
                     ten = x.ten,
                     ngay_sua_doi = x.ngay_chinh_sua ?? x.ngay_tao,
@@ -366,6 +368,7 @@ namespace DATN.Application.TaiLieu
                 // ds thư mục
                 var dsThuMuc = _context.thu_muc.Where(x => x.nguoi_tao == currentUser.tai_khoan && x.thu_muc_cha_id == null).Select(x => new ResultSearch
                 {
+                    id = x.id,
                     is_folder = true,
                     ten = x.ten,
                     ngay_tao = x.ngay_tao,
@@ -525,6 +528,7 @@ namespace DATN.Application.TaiLieu
                 // ds tài liệu
                 var dsTaiLieu = docs.Where(x => x.nguoi_tao == currentUser.tai_khoan).Select(x => new ResultSearch
                 {
+                    id = x.Id,
                     is_folder = false,
                     ten = x.ten,
                     ngay_sua_doi = x.ngay_chinh_sua ?? x.ngay_tao,
@@ -542,6 +546,7 @@ namespace DATN.Application.TaiLieu
                 var shareDocs = _context.tai_lieu_2_nguoi_dung.Where(x => x.nguoi_dung_id == currentUser.Id).Select(x => x.tai_lieu_id);
                 var dsTaiLieuShare = docs.Where(x => shareDocs.Contains(x.Id)).Select(x => new ResultSearch
                 {
+                    id = x.Id,
                     is_folder = false,
                     ten = x.ten,
                     ngay_sua_doi = x.ngay_chinh_sua ?? x.ngay_tao,
@@ -557,6 +562,7 @@ namespace DATN.Application.TaiLieu
                 // ds thư mục
                 var dsThuMuc = folders.Where(x => x.nguoi_tao == currentUser.tai_khoan).Select(x => new ResultSearch
                 {
+                    id = x.id,
                     is_folder = true,
                     ten = x.ten,
                     ngay_tao = x.ngay_tao,
@@ -621,6 +627,255 @@ namespace DATN.Application.TaiLieu
             {
                 throw new Exception(ex.Message);
             } 
+        }
+
+        public async Task<string> HandleShareFile(ShareFileParams request)
+        {
+            try
+            {
+                var TL2ND = _context.tai_lieu_2_nguoi_dung.Where(x => x.tai_lieu_id == request.tai_lieu_id).ToList();
+                if (TL2ND != null)
+                {
+                    var dsAdd = new List<tai_lieu_2_nguoi_dung>();
+                    var dsDelete = new List<tai_lieu_2_nguoi_dung>();
+
+                    var dsNguoiDungTrongDb = TL2ND.Select(x => x.nguoi_dung_id).ToList();
+                    var dsNguoiDungRequest = request.ds_nguoi_dung ?? new List<Guid>();
+
+                    // ❌ Có trong DB nhưng không có trong request => xóa
+                    dsDelete = TL2ND
+                        .Where(x => !dsNguoiDungRequest.Contains(x.nguoi_dung_id))
+                        .ToList();
+
+                    // ✅ Có trong request nhưng không có trong DB => thêm
+                    var dsThemMoi = dsNguoiDungRequest
+                        .Where(id => !dsNguoiDungTrongDb.Contains(id))
+                        .ToList();
+
+                    foreach (var id in dsThemMoi)
+                    {
+                        dsAdd.Add(new tai_lieu_2_nguoi_dung
+                        {
+                            tai_lieu_id = request.tai_lieu_id, // thay bằng id tài liệu của bạn
+                            nguoi_dung_id = id
+                        });
+                    }
+
+                    // Sau đó có thể xử lý
+                    if (dsDelete.Any())
+                        _context.tai_lieu_2_nguoi_dung.RemoveRange(dsDelete);
+
+                    if (dsAdd.Any())
+                        await _context.tai_lieu_2_nguoi_dung.AddRangeAsync(dsAdd);
+
+                    await _context.SaveChangesAsync();
+                }
+
+                await _logger.AddLog(new nhat_ky_he_thong_dto
+                {
+                    loai = 1,
+                    detail = $"",
+                    command = "PERM_SHARE",
+                });
+
+                return "OK";
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<string> HandleChangeName(ChangenameParams request)
+        {
+            try
+            {
+                var doc = await _context.tai_lieu.FirstOrDefaultAsync(x => x.Id == request.tai_lieu_id);
+                if (doc == null)
+                    throw new Exception("Không tồn tại tài liệu!");
+
+                // Lấy đường dẫn gốc từ config
+                string rootPath = _config.GetSection("RootFileServer")["path"] ?? "";
+                string secret = _config.GetSection("RootFileServer")["secret"] ?? "";
+                var currentUser = _helper.GetUserInfo().userName;
+                if (currentUser == null)
+                {
+                    throw new Exception("Không lấy được thông tin người dùng.");
+                }
+
+                // Lấy thông tin đường dẫn cũ
+                string oldRelativePath = doc.duong_dan; // vd: admin\secret\use_case_diagram.pdf
+                string oldFullPath = Path.Combine(rootPath, oldRelativePath);
+
+                // Tách thư mục và phần mở rộng
+                string directory = Path.GetDirectoryName(oldRelativePath) ?? "";
+                string extension = Path.GetExtension(oldRelativePath);
+                string newFileName = $"{request.new_name}{extension}";
+
+                // Tạo đường dẫn mới
+                string newRelativePath = Path.Combine(directory, newFileName);
+                string newFullPath = Path.Combine(rootPath, newRelativePath);
+
+                // Đảm bảo thư mục tồn tại
+                string fullDir = Path.GetDirectoryName(newFullPath)!;
+                if (!Directory.Exists(fullDir))
+                {
+                    Directory.CreateDirectory(fullDir);
+                }
+
+                // Đổi tên file thật trên server (nếu tồn tại)
+                if (File.Exists(oldFullPath))
+                {
+                    File.Move(oldFullPath, newFullPath, true); // true = ghi đè nếu trùng tên
+                }
+                else
+                {
+                    throw new Exception($"Không tìm thấy file tại: {oldFullPath}");
+                }
+
+                // Cập nhật DB
+                doc.ten = request.new_name;
+                doc.duong_dan = newRelativePath.Replace("\\", "/"); // dùng "/" để đồng nhất
+
+                _context.tai_lieu.Update(doc);
+                await _context.SaveChangesAsync();
+
+                return "Đổi tên tài liệu và file trên server thành công!";
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi đổi tên tài liệu: {ex.Message}");
+            }
+        }
+
+
+        public async Task<string> DeleteDocs(Guid id)
+        {
+            try
+            {
+                // 1️⃣ Lấy thông tin tài liệu
+                var doc = await _context.tai_lieu.FirstOrDefaultAsync(x => x.Id == id);
+                if (doc == null)
+                    throw new Exception("Không tìm thấy tài liệu cần xóa!");
+
+                // 2️⃣ Lấy đường dẫn gốc từ cấu hình
+                string rootPath = _config.GetSection("RootFileServer")["path"] ?? "";
+
+                // 3️⃣ Xác định đường dẫn thật trên server
+                string fullPath = Path.Combine(rootPath, doc.duong_dan);
+
+                // 4️⃣ Xóa file thật trên ổ đĩa (nếu có)
+                if (File.Exists(fullPath))
+                {
+                    File.Delete(fullPath);
+                }
+
+                // 5️⃣ Xóa bản ghi trong database
+                _context.tai_lieu.Remove(doc);
+                await _context.SaveChangesAsync();
+
+                return "Xóa tài liệu thành công!";
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi xóa tài liệu: {ex.Message}");
+            }
+        }
+
+        public async Task<string> DeleteManyDocs(List<Guid> ids)
+        {
+            try
+            {
+                if (ids == null || !ids.Any())
+                    throw new Exception("Danh sách ID tài liệu trống!");
+
+                var docs = await _context.tai_lieu.Where(x => ids.Contains(x.Id)).ToListAsync();
+                if (docs == null || docs.Count == 0)
+                    throw new Exception("Không tìm thấy tài liệu nào để xóa!");
+
+                string rootPath = _config.GetSection("RootFileServer")["path"] ?? "";
+
+                foreach (var doc in docs)
+                {
+                    string fullPath = Path.Combine(rootPath, doc.duong_dan);
+
+                    if (File.Exists(fullPath))
+                    {
+                        try
+                        {
+                            File.Delete(fullPath);
+                        }
+                        catch (Exception fileEx)
+                        {
+                            // Không dừng toàn bộ tiến trình, chỉ log lỗi file
+                            throw new Exception($"Không thể xóa file {fullPath}: {fileEx.Message}");
+                        }
+                    }
+                }
+
+                // 4️⃣ Xóa các bản ghi trong DB
+                _context.tai_lieu.RemoveRange(docs);
+                await _context.SaveChangesAsync();
+
+                return $"Đã xóa thành công {docs.Count} tài liệu!";
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi xóa nhiều tài liệu: {ex.Message}");
+            }
+        }
+
+        public async Task<DownloadResult> GetDoc(Guid id)
+        {
+            try
+            {
+                // 1️⃣ Lấy thông tin tài liệu
+                var taiLieu = _context.tai_lieu.FirstOrDefault(x => x.Id == id);
+                if (taiLieu == null)
+                {
+                    throw new Exception("Không lấy được tài liệu.");
+                }
+
+                // 2️⃣ Đường dẫn file
+                string rootPath = _config.GetSection("RootFileServer")["path"] ?? "";
+                var filePath = Path.Combine(rootPath, taiLieu.duong_dan);
+
+                if (!System.IO.File.Exists(filePath))
+                {
+                    throw new Exception("Không tìm thấy file.");
+                }
+
+                // 3️⃣ Đọc file vào memory stream
+                var memory = new MemoryStream();
+                using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                {
+                    await stream.CopyToAsync(memory);
+                }
+                memory.Position = 0;
+
+                // 4️⃣ Lấy ContentType
+                var contentType = GetContentType(filePath);
+
+                // 5️⃣ Ghi nhật ký hành động (nếu cần)
+                await _logger.AddLog(new nhat_ky_he_thong_dto
+                {
+                    loai = 1,
+                    detail = $"Xem trước tài liệu {taiLieu.ten}",
+                    command = "PERM_PREVIEW",
+                });
+
+                // 6️⃣ Trả kết quả
+                return new DownloadResult
+                {
+                    Stream = memory,
+                    ContentType = contentType,
+                    FileName = Path.GetFileName(filePath)
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     }
 }

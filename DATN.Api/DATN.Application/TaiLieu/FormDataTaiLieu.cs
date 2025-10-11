@@ -18,6 +18,7 @@ namespace DATN.Application.TaiLieu
 
     public class ResultSearch // kết quả tìm kiếm
     {
+        public Guid? id { get; set; }
         public string? ten { get; set; }
         public string? ten_chu_so_huu { get; set; }
         public DateTime? ngay_tao { get; set; }
@@ -45,6 +46,19 @@ namespace DATN.Application.TaiLieu
         public DateTime? ngay_chinh_sua_from { get; set; } 
         public DateTime? ngay_chinh_sua_to { get; set; }
         public Guid? thu_muc_id { get; set; }
+
+    }
+    public class ShareFileParams
+    {
+        public Guid tai_lieu_id { get; set; }
+        public List<Guid> ds_nguoi_dung { get; set; }
+
+    }
+
+    public class ChangenameParams
+    {
+        public Guid tai_lieu_id { get; set; }
+        public string new_name { get; set; }
 
     }
 }

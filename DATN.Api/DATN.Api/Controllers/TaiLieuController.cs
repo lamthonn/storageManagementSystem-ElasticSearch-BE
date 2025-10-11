@@ -114,7 +114,83 @@ namespace DATN.Api.Controllers
         #endregion
 
         #region api chia sẻ tài liệu
+        [HttpPost("chia-se-tai-lieu")]
+        public async Task<string> HandleShareFile(ShareFileParams requests)
+        {
+            try
+            {
+                var result = await _taiLieuService.HandleShareFile(requests);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        #endregion
+        
+        #region api sửa tên tài liệu
+        [HttpPut("sua-ten-file")]
+        public async Task<string> HandleChangeName(ChangenameParams requests)
+        {
+            try
+            {
+                var result = await _taiLieuService.HandleChangeName(requests);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        #endregion
 
+        #region api sửa tên tài liệu
+        [HttpDelete("xoa-file")]
+        public async Task<string> HandleDeleteFile(Guid id)
+        {
+            try
+            {
+                var result = await _taiLieuService.DeleteDocs(id);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        #endregion
+
+        #region api sửa tên tài liệu
+        [HttpDelete("xoa-nhieu-file")]
+        public async Task<string> HandleDeleteManyFile(List<Guid> ids)
+        {
+            try
+            {
+                var result = await _taiLieuService.DeleteManyDocs(ids);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        #endregion
+
+        #region api sửa tên tài liệu
+        [HttpGet("preview")]
+        public async Task<IActionResult > Preview(Guid id)
+        {
+            try
+            {
+                var result = await _taiLieuService.GetDoc(id);
+                return File(result.Stream, result.ContentType, result.FileName);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
         #endregion
 
     }

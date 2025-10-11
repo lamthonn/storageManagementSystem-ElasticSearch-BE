@@ -18,5 +18,10 @@ namespace DATN.Application.Interfaces
         Task<List<nguoi_dung_dto>> GetAllNguoiDungByDocs(Guid currentUserId); // lấy tất cả người dùng có tài liệu được chia sẻ với mình
         Task<DownloadResult> HandleDownloadTaiLieu(Guid idTaiLieu); // lấy tất cả người dùng có tài liệu được chia sẻ với mình
         Task<PaginatedList<ResultSearch>> GetDocsByFolder(ResultSearchParams request);
+        Task<string> HandleShareFile(ShareFileParams request);
+        Task<string> HandleChangeName(ChangenameParams request);
+        Task<string> DeleteDocs(Guid id);
+        Task<string> DeleteManyDocs(List<Guid> ids);
+        Task<DownloadResult> GetDoc(Guid id);    
     }
 }
