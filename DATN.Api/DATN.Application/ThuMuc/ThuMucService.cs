@@ -3,6 +3,7 @@ using DATN.Application.Utils;
 using DATN.Domain.DTO;
 using DATN.Domain.Entities;
 using DATN.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,21 +69,27 @@ namespace DATN.Application.ThuMuc
         {
             try
             {
-                var data = _context.thu_muc.FirstOrDefault(x => x.id == id);
-                if(data == null)
-                {
-                    throw new Exception("Không tồn tại thư mục");
-                }
+                // Tìm thư mục cần xóa
+                var thuMuc = await _context.thu_muc.FirstOrDefaultAsync(x => x.id == id);
+                if (thuMuc == null)
+                    throw new Exception("Không tìm thấy thư mục cần xóa");
 
-                _context.thu_muc.Remove(data);
-                _context.SaveChanges();
+                // Gọi hàm đệ quy để xóa tất cả thư mục con
+                await DeleteThuMucCon(id);
+
+                // Xóa thư mục cha sau khi xóa con
+                _context.thu_muc.Remove(thuMuc);
+                await _context.SaveChangesAsync();
+
+                // Ghi log
                 await _logger.AddLog(new nhat_ky_he_thong_dto
                 {
                     loai = 1,
-                    detail = $"Xóa thư mục {data.ten}",
-                    command = "PERM_EDIT",
+                    detail = $"Đã xóa thư mục '{thuMuc.ten}' và toàn bộ thư mục con",
+                    command = "PERM_DELETE",
                 });
-                return "Xóa thành công thư mục";
+
+                return "Xóa thành công thư mục và toàn bộ thư mục con";
             }
             catch (Exception ex)
             {
@@ -94,6 +101,32 @@ namespace DATN.Application.ThuMuc
                 });
                 throw new Exception(ex.Message);
             }
+        }
+
+        private async Task DeleteThuMucCon(Guid thuMucChaId)
+        {
+            // Lấy danh sách thư mục con của thư mục cha
+            var danhSachCon = await _context.thu_muc
+                .Where(x => x.thu_muc_cha_id == thuMucChaId)
+                .ToListAsync();
+
+            var dsTaiLieu = _context.tai_lieu.Where(x => x.thu_muc_id == thuMucChaId);
+            if (dsTaiLieu != null && dsTaiLieu.Count() > 0)
+            {
+                _context.tai_lieu.RemoveRange(dsTaiLieu);
+            }
+
+            foreach (var thuMucCon in danhSachCon)
+            {
+                // Đệ quy xóa tiếp các thư mục con của thư mục con này
+                await DeleteThuMucCon(thuMucCon.id);
+
+                // Xóa thư mục con sau khi đã xóa toàn bộ cấp con của nó
+                _context.thu_muc.Remove(thuMucCon);
+            }
+
+            // Lưu sau mỗi cấp để tránh lỗi quan hệ khóa ngoại
+            await _context.SaveChangesAsync();
         }
 
         public async Task<List<thu_muc_dto>> GetAll(Guid nguoi_dung_id)

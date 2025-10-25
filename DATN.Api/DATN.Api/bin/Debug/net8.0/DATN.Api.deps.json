@@ -11,11 +11,12 @@
           "DATN.Application": "1.0.0",
           "DATN.Domain": "1.0.0",
           "DATN.Infrastructure": "1.0.0",
-          "MaHoa.Application": "1.0.0",
+          "DocumentFormat.OpenXml": "2.19.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.19",
           "Microsoft.EntityFrameworkCore": "8.0.19",
           "Microsoft.EntityFrameworkCore.Design": "8.0.19",
           "Microsoft.EntityFrameworkCore.Tools": "8.0.19",
+          "Newtonsoft.Json": "13.0.1",
           "Pomelo.EntityFrameworkCore.MySql": "8.0.3",
           "Serilog": "4.3.0",
           "Serilog.AspNetCore": "9.0.0",
@@ -26,6 +27,17 @@
         },
         "runtime": {
           "DATN.Api.dll": {}
+        }
+      },
+      "DocumentFormat.OpenXml/2.19.0": {
+        "dependencies": {
+          "System.IO.Packaging": "4.7.0"
+        },
+        "runtime": {
+          "lib/net6.0/DocumentFormat.OpenXml.dll": {
+            "assemblyVersion": "2.19.0.0",
+            "fileVersion": "2.19.0.0"
+          }
         }
       },
       "Humanizer.Core/2.14.1": {
@@ -584,6 +596,14 @@
           }
         }
       },
+      "Newtonsoft.Json/13.0.1": {
+        "runtime": {
+          "lib/netstandard2.0/Newtonsoft.Json.dll": {
+            "assemblyVersion": "13.0.0.0",
+            "fileVersion": "13.0.1.25517"
+          }
+        }
+      },
       "Pomelo.EntityFrameworkCore.MySql/8.0.3": {
         "dependencies": {
           "Microsoft.EntityFrameworkCore.Relational": "8.0.19",
@@ -858,6 +878,14 @@
           }
         }
       },
+      "System.IO.Packaging/4.7.0": {
+        "runtime": {
+          "lib/netstandard2.0/System.IO.Packaging.dll": {
+            "assemblyVersion": "4.0.5.0",
+            "fileVersion": "4.700.19.56404"
+          }
+        }
+      },
       "System.IO.Pipelines/9.0.0": {
         "runtime": {
           "lib/net8.0/System.IO.Pipelines.dll": {
@@ -910,8 +938,10 @@
         "dependencies": {
           "DATN.Domain": "1.0.0",
           "DATN.Infrastructure": "1.0.0",
+          "DocumentFormat.OpenXml": "2.19.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.19",
           "Microsoft.EntityFrameworkCore": "8.0.19",
+          "Newtonsoft.Json": "13.0.1",
           "Pomelo.EntityFrameworkCore.MySql": "8.0.3",
           "Serilog": "4.3.0",
           "Serilog.AspNetCore": "9.0.0",
@@ -941,11 +971,6 @@
         "runtime": {
           "DATN.Infrastructure.dll": {}
         }
-      },
-      "MaHoa.Application/1.0.0": {
-        "runtime": {
-          "MaHoa.Application.dll": {}
-        }
       }
     }
   },
@@ -954,6 +979,13 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "DocumentFormat.OpenXml/2.19.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-BLFqodowHZHR/A/sKU/6e+63J5ONWDdv8hEuSZOUiBfGFuVmsG9P3o+LMSq+dajNWE1q+lqVSa1H5FuhLX8/fA==",
+      "path": "documentformat.openxml/2.19.0",
+      "hashPath": "documentformat.openxml.2.19.0.nupkg.sha512"
     },
     "Humanizer.Core/2.14.1": {
       "type": "package",
@@ -1221,6 +1253,13 @@
       "path": "mysqlconnector/2.3.5",
       "hashPath": "mysqlconnector.2.3.5.nupkg.sha512"
     },
+    "Newtonsoft.Json/13.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A==",
+      "path": "newtonsoft.json/13.0.1",
+      "hashPath": "newtonsoft.json.13.0.1.nupkg.sha512"
+    },
     "Pomelo.EntityFrameworkCore.MySql/8.0.3": {
       "type": "package",
       "serviceable": true,
@@ -1403,6 +1442,13 @@
       "path": "system.identitymodel.tokens.jwt/7.1.2",
       "hashPath": "system.identitymodel.tokens.jwt.7.1.2.nupkg.sha512"
     },
+    "System.IO.Packaging/4.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-9VV4KAbgRQZ79iEoG40KIeZy38O30oWwewScAST879+oki8g/Wa2HXZQgrhDDxQM4GkP1PnRJll05NMiVPbYAw==",
+      "path": "system.io.packaging/4.7.0",
+      "hashPath": "system.io.packaging.4.7.0.nupkg.sha512"
+    },
     "System.IO.Pipelines/9.0.0": {
       "type": "package",
       "serviceable": true,
@@ -1463,11 +1509,6 @@
       "sha512": ""
     },
     "DATN.Infrastructure/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "MaHoa.Application/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

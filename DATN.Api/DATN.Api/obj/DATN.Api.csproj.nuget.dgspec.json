@@ -37,9 +37,6 @@
               },
               "C:\\Users\\ADMIN\\Desktop\\Đồ án tốt nghiệp\\Coding\\DATN_API\\DATN.Api\\DATN.Infrastructure\\DATN.Infrastructure.csproj": {
                 "projectPath": "C:\\Users\\ADMIN\\Desktop\\Đồ án tốt nghiệp\\Coding\\DATN_API\\DATN.Api\\DATN.Infrastructure\\DATN.Infrastructure.csproj"
-              },
-              "C:\\Users\\ADMIN\\Desktop\\Đồ án tốt nghiệp\\Coding\\DATN_API\\DATN.Api\\MaHoa.Application\\MaHoa.Application.csproj": {
-                "projectPath": "C:\\Users\\ADMIN\\Desktop\\Đồ án tốt nghiệp\\Coding\\DATN_API\\DATN.Api\\MaHoa.Application\\MaHoa.Application.csproj"
               }
             }
           }
@@ -59,6 +56,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "DocumentFormat.OpenXml": {
+              "target": "Package",
+              "version": "[2.19.0, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[8.0.19, )"
@@ -78,6 +79,10 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[8.0.19, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.1, )"
             },
             "Pomelo.EntityFrameworkCore.MySql": {
               "target": "Package",
@@ -180,6 +185,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "DocumentFormat.OpenXml": {
+              "target": "Package",
+              "version": "[2.19.0, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[8.0.19, )"
@@ -199,6 +208,10 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[8.0.19, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.1, )"
             },
             "Pomelo.EntityFrameworkCore.MySql": {
               "target": "Package",
@@ -395,67 +408,6 @@
               "version": "[8.0.3, )"
             }
           },
-          "imports": [
-            "net461",
-            "net462",
-            "net47",
-            "net471",
-            "net472",
-            "net48",
-            "net481"
-          ],
-          "assetTargetFallback": true,
-          "warn": true,
-          "frameworkReferences": {
-            "Microsoft.NETCore.App": {
-              "privateAssets": "all"
-            }
-          },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.300/PortableRuntimeIdentifierGraph.json"
-        }
-      }
-    },
-    "C:\\Users\\ADMIN\\Desktop\\Đồ án tốt nghiệp\\Coding\\DATN_API\\DATN.Api\\MaHoa.Application\\MaHoa.Application.csproj": {
-      "version": "1.0.0",
-      "restore": {
-        "projectUniqueName": "C:\\Users\\ADMIN\\Desktop\\Đồ án tốt nghiệp\\Coding\\DATN_API\\DATN.Api\\MaHoa.Application\\MaHoa.Application.csproj",
-        "projectName": "MaHoa.Application",
-        "projectPath": "C:\\Users\\ADMIN\\Desktop\\Đồ án tốt nghiệp\\Coding\\DATN_API\\DATN.Api\\MaHoa.Application\\MaHoa.Application.csproj",
-        "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ADMIN\\Desktop\\Đồ án tốt nghiệp\\Coding\\DATN_API\\DATN.Api\\MaHoa.Application\\obj\\",
-        "projectStyle": "PackageReference",
-        "configFilePaths": [
-          "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
-        ],
-        "originalTargetFrameworks": [
-          "net8.0"
-        ],
-        "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
-          "https://api.nuget.org/v3/index.json": {}
-        },
-        "frameworks": {
-          "net8.0": {
-            "targetAlias": "net8.0",
-            "projectReferences": {}
-          }
-        },
-        "warningProperties": {
-          "warnAsError": [
-            "NU1605"
-          ]
-        },
-        "restoreAuditProperties": {
-          "enableAudit": "true",
-          "auditLevel": "low",
-          "auditMode": "direct"
-        }
-      },
-      "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
           "imports": [
             "net461",
             "net462",

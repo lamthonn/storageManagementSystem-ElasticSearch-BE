@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MaHoa.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0ac9272475778bec8f4e7a1cea3d480c50686448")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+035b0877f1f128e0ac01dc50d6b9d4ad891973ae")]
 [assembly: System.Reflection.AssemblyProductAttribute("MaHoa.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MaHoa.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

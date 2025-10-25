@@ -112,11 +112,9 @@ C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Ap
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\DATN.Application.dll
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\DATN.Domain.dll
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\DATN.Infrastructure.dll
-C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\MaHoa.Application.dll
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\DATN.Application.pdb
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\DATN.Domain.pdb
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\DATN.Infrastructure.pdb
-C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\MaHoa.Application.pdb
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\Microsoft.Extensions.Configuration.Abstractions.dll
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\Microsoft.Extensions.Configuration.Binder.dll
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\Microsoft.Extensions.Diagnostics.Abstractions.dll
@@ -147,3 +145,6 @@ C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Ap
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\DocumentFormat.OpenXml.dll
+C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\System.IO.Packaging.dll
+C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Api\bin\Debug\net8.0\Newtonsoft.Json.dll
