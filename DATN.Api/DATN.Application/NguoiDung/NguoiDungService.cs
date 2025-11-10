@@ -651,5 +651,57 @@ namespace DATN.Application.NguoiDung
                 throw new Exception(ex.Message);
             }
         }
+
+        public async Task<List<nhom_nguoi_dung_dto>> GetNhomNguoiDungByNguoiDungId(Guid nguoi_dung_id)
+        {
+            try
+            {
+                var data = await _context.nguoi_dung_2_nhom_nguoi_dung
+                    .Where(x => x.nguoi_dung_id == nguoi_dung_id)
+                    .Select(x => new nhom_nguoi_dung_dto
+                    {
+                        Id = x.nhom_nguoi_dung.Id,
+                        ma = x.nhom_nguoi_dung.ma,
+                        ten = x.nhom_nguoi_dung.ten,
+                        mo_ta = x.nhom_nguoi_dung.mo_ta,
+                        isMacDinh = x.mac_dinh,
+                    }).ToListAsync();
+
+                return data;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<string> ChangeRoleDefault(Guid nguoi_dung_id, Guid nhom_nguoi_dung_id)
+        {
+            try
+            {
+                var dsNhomNguoiDung = _context.nguoi_dung_2_nhom_nguoi_dung.Where(x => x.nguoi_dung_id == nguoi_dung_id);
+                var newRoleDefault = dsNhomNguoiDung.FirstOrDefault(x => x.nhom_nguoi_dung_id == nhom_nguoi_dung_id);
+                var oldRoleDefault = dsNhomNguoiDung.FirstOrDefault(x => x.mac_dinh == true);
+
+                if (oldRoleDefault != null)
+                {
+                    oldRoleDefault.mac_dinh = false;
+                    _context.nguoi_dung_2_nhom_nguoi_dung.Update(oldRoleDefault);
+                }
+
+                if (newRoleDefault != null)
+                {
+                    newRoleDefault.mac_dinh = true;
+                    _context.nguoi_dung_2_nhom_nguoi_dung.Update(newRoleDefault);
+                }
+
+                await _context.SaveChangesAsync(new CancellationToken());
+                return "Thay đổi nhóm người dùng mặc định thành công";
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
     }
 }

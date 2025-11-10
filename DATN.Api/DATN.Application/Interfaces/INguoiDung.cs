@@ -23,5 +23,7 @@ namespace DATN.Application.Interfaces
         Task<string> DeleteManyNguoiDung(List<Guid> ids);
         Task<List<menu_dto>> GetMenuByNguoiDung(Guid nguoi_dung_id);
         Task<List<string>> GetPermByNguoiDung(Guid nguoi_dung_id, string ma_dinh_danh);
+        Task<List<nhom_nguoi_dung_dto>> GetNhomNguoiDungByNguoiDungId(Guid nguoi_dung_id);
+        Task<string> ChangeRoleDefault(Guid nguoi_dung_id, Guid nhom_nguoi_dung_id);
     }
 }

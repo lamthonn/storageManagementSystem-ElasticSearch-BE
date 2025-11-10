@@ -38,7 +38,8 @@ namespace DATN.Application.NhomNguoiDung
                         ma = nhomNguoiDung.ma,
                         ten = nhomNguoiDung.ten,
                         mo_ta = nhomNguoiDung.mo_ta,
-                        trang_thai = nhomNguoiDung.trang_thai
+                        trang_thai = nhomNguoiDung.trang_thai,
+                        cap_do = nhomNguoiDung.cap_do,
                     });
                 }
                 else
@@ -135,8 +136,9 @@ namespace DATN.Application.NhomNguoiDung
                                         nguoi_tao = x.nguoi_tao,
                                         ngay_chinh_sua = x.ngay_chinh_sua,
                                         nguoi_chinh_sua = x.nguoi_chinh_sua,
-                                        trang_thai = x.trang_thai
-                                    });
+                                        trang_thai = x.trang_thai,
+                                        cap_do = x.cap_do
+                                    }).OrderBy(x => x.cap_do);
                 var result = await PaginatedList<nhom_nguoi_dung_dto>.Create(dataQueryDto, request.pageNumber, request.pageSize);
                 return result;
             }
@@ -369,6 +371,7 @@ namespace DATN.Application.NhomNguoiDung
                     mo_ta = request.mo_ta,
                     trang_thai = 1,
                     ngay_tao = DateTime.Now,
+                    cap_do = request.cap_do ?? 1,
                     nguoi_tao = request.nguoi_tao,
                 };
                 await _context.nhom_nguoi_dung.AddAsync(newInfor);
@@ -449,6 +452,7 @@ namespace DATN.Application.NhomNguoiDung
                     NND.ten = request.ten;
                     NND.mo_ta = request.mo_ta;
                     NND.trang_thai = request.trang_thai ?? 1;
+                    NND.cap_do = request.cap_do ?? NND.cap_do;
                     _context.nhom_nguoi_dung.Update(NND);
 
                     if(request.lstNguoiDungs != null && request.lstNguoiDungs.Count > 0)

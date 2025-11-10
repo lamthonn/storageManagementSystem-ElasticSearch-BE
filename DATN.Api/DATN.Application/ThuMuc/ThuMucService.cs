@@ -4,6 +4,7 @@ using DATN.Domain.DTO;
 using DATN.Domain.Entities;
 using DATN.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Nest;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,12 +18,14 @@ namespace DATN.Application.ThuMuc
         private readonly AppDbContext _context;
         private readonly INhatKyHeThong _logger;
         private readonly Helper _helper;
+        private readonly ElasticClient _client;
 
-        public ThuMucService(AppDbContext context, INhatKyHeThong logger, Helper helper) 
+        public ThuMucService(AppDbContext context, INhatKyHeThong logger, Helper helper, ElasticClient client) 
         {
             _context = context;
             _logger = logger;
             _helper = helper;
+            _client = client;
         }
         public async Task<thu_muc_dto> AddThuMuc(thu_muc_dto request)
         {
@@ -38,6 +41,10 @@ namespace DATN.Application.ThuMuc
                     ngay_tao = DateTime.Now,
                     nguoi_tao = curUser,
                 };
+
+                // đánh index cho thư mục
+                var client = new ElasticClient();
+                var response = await _client.IndexAsync(newTM, i => i.Id(newTM.id).Index("thu_muc"));
 
                 _context.thu_muc.Add(newTM);
                 _context.SaveChanges();

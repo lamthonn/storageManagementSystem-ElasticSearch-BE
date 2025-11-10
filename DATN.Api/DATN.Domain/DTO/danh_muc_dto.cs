@@ -17,5 +17,6 @@ namespace DATN.Domain.DTO
         public string? ten { get; set; }
         public string? mo_ta { get; set; }
         public bool? trang_thai { get; set; }
+        public int? cap_do { get; set; }
     }
 }

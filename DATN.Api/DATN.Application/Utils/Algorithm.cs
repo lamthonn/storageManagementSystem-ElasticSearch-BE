@@ -582,6 +582,8 @@ Storing:
         }
     }
 
+
+    //name tên của key
     public static async Task<string> SetVaultSecretValue(string app, string name, string key, object value)
     {
         // 1. Vault Server Address (Ensure it's accessible from Docker)
@@ -921,7 +923,7 @@ Storing:
                 // dung cap key Local voi ephemeral Key, dinh kem ephemeral public Key trong data
                 var receiverPublicKey = Convert.FromBase64String(publickey ?? await GetVaultSecretValue(AppCode, "pbECCLocal"));
                 using var senderEcdh = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
-                byte[] ephemeralPublicKey = senderEcdh.ExportSubjectPublicKeyInfo();
+                byte[] ephemeralPublicKey = senderEcdh.ExportSubjectPublicKeyInfo();  //
 
                 using var receiverPublic = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
                 receiverPublic.ImportSubjectPublicKeyInfo(receiverPublicKey, out _);

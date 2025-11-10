@@ -11,6 +11,7 @@ using DATN.Application.NguoiDung;
 using DATN.Application.NhatKyHeThong;
 using DATN.Application.ThuMuc;
 using DATN.Application.TaiLieu;
+using Nest;
 
 namespace DATN.Api.ServiceManage
 {
@@ -20,6 +21,9 @@ namespace DATN.Api.ServiceManage
         {
             // Đăng ký các service tại đây
             services.AddTransient<Helper>();
+            services.AddTransient<ElasticClient>();
+            services.AddTransient<ElasticSearchService>();
+            services.AddTransient<IAuthen, authen>();
             services.AddTransient<IAuthen, authen>();
             services.AddTransient<IDanhMucCapDo, DanhMucCapDoService>();
             services.AddTransient<IDanhMucPhongBan, DanhMucPhongBanService>();

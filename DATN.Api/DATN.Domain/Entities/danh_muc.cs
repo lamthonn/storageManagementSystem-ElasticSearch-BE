@@ -19,6 +19,7 @@ namespace DATN.Domain.Entities
         [StringLength(255)]
         public string ten { get; set; }
         public string? mo_ta { get; set; }
+        public int? cap_do { get; set; }
         //thêm mới
         [DefaultValue(false)]
         public bool trang_thai { get; set; } // 1: Đang hoạt động, 2: Không hoạt động , ....

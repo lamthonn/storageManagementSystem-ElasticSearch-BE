@@ -1,6 +1,7 @@
 ﻿using backend_v3.Dto.Common;
 using DATN.Application.Interfaces;
 using DATN.Domain.DTO;
+using DATN.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -248,6 +249,50 @@ namespace DATN.Api.Controllers
             try
             {
                 var result = await _nguoiDungService.GetDsNguoiDungInDocs(tai_lieu_id);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        #endregion
+
+        #region API get ds nhóm người dùng by người dùng id
+        /// <summary>
+        /// Thêm mới người dùng
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpGet("get-nhom-nguoi-dung-by-nguoi-dung-id")]
+        [Authorize]
+        public async Task<IActionResult> GetNhomNguoiDungByNguoiDungId(Guid nguoi_dung_id)
+        {
+            try
+            {
+                var result = await _nguoiDungService.GetNhomNguoiDungByNguoiDungId(nguoi_dung_id);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        #endregion
+
+        #region API get ds nhóm người dùng by người dùng id
+        /// <summary>
+        /// Thêm mới người dùng
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPut("change-nhom-nguoi-dung")]
+        [Authorize]
+        public async Task<IActionResult> ChangeRoleDefault(Guid nguoi_dung_id, Guid nhom_nguoi_dung_id)
+        {
+            try
+            {
+                var result = await _nguoiDungService.ChangeRoleDefault(nguoi_dung_id, nhom_nguoi_dung_id);
                 return Ok(result);
             }
             catch (Exception ex)

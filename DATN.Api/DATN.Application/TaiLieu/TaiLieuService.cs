@@ -10,12 +10,14 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Nest;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace DATN.Application.TaiLieu
@@ -26,12 +28,17 @@ namespace DATN.Application.TaiLieu
         private readonly IConfiguration _config;
         private readonly Helper _helper;
         private readonly INhatKyHeThong _logger;
-        public TaiLieuService(AppDbContext context, Helper helper, INhatKyHeThong logger, IConfiguration config)
+        private readonly ElasticSearchService _elastic;
+        private readonly ElasticClient _client;
+
+        public TaiLieuService(AppDbContext context, Helper helper, INhatKyHeThong logger, IConfiguration config, ElasticSearchService elastic, ElasticClient client)
         {
             _context = context;
             _helper = helper;
             _logger = logger;
             _config = config;
+            _elastic = elastic;
+            _client = client;
         }
 
         public async Task<IActionResult> AddTaiLieu(uploadedFileInfo request)
@@ -41,6 +48,7 @@ namespace DATN.Application.TaiLieu
                 if (request.files == null || request.files.Count == 0) throw new Exception("Không có file nào được upload.");
 
                 string rootPath = _config.GetSection("RootFileServer")["path"] ?? "";
+                string ElasticSearchUrl = _config.GetSection("ElasticSearchUrl")["path"] ?? "";
                 string secret = _config.GetSection("RootFileServer")["secret"] ?? "";
                 var currentUser = _helper.GetUserInfo().userName;
                 if(currentUser == null)
@@ -131,8 +139,24 @@ namespace DATN.Application.TaiLieu
 
                 if(dsNewDocs != null && dsNewDocs.Count > 0)
                 {
-                    _context.AddRange(dsNewDocs);
+                    _context.tai_lieu.AddRange(dsNewDocs);
                     await _context.SaveChangesAsync(new CancellationToken());
+
+                    var client = new ElasticClient();
+                    foreach (var doc in dsNewDocs)
+                    {
+                        var response = await _elastic.UpsertTaiLieuAsync(doc);
+
+                        if (response.IsValid)
+                        {
+                            doc.IndexStatus = "success";
+                            doc.IndexedAt = DateTime.UtcNow;
+                        }
+                        else
+                        {
+                            doc.IndexStatus = "error";
+                        }
+                    }
                 }
 
                 await _logger.AddLog(new nhat_ky_he_thong_dto
@@ -320,6 +344,18 @@ namespace DATN.Application.TaiLieu
                 return 0; // khác
             }
         }
+
+        private static string[] GetExtensionsByLoaiTaiLieu(int loai)
+        {
+            return loai switch
+            {
+                1 => new[] { ".doc", ".docx", ".txt", ".odt" },              // Word
+                2 => new[] { ".xls", ".xlsx", ".csv", ".ods" },              // Excel
+                3 => new[] { ".pdf" },                                       // PDF
+                4 => new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff" }, // Ảnh
+                _ => Array.Empty<string>()
+            };
+        }
         public async Task<PaginatedList<ResultSearch>> GetDataSearch(ResultSearchParams request)
         {
             try
@@ -332,7 +368,121 @@ namespace DATN.Application.TaiLieu
                 }
 
                 // ds tài liệu
-                var dsTaiLieu = _context.tai_lieu.Where(x=> x.nguoi_tao == currentUser.tai_khoan && x.thu_muc_id == null).Select( x => new ResultSearch
+                var dsTaiLieu = await _client.SearchAsync<tai_lieu>(s => s
+                    .Index("tai_lieu")
+                    .Query(q =>
+                        q.Bool(b =>
+                            {
+                                var mustQueries = new List<QueryContainer>();
+                                var shouldQueries = new List<QueryContainer>();
+                                var mustNotQueries = new List<QueryContainer>();
+                                
+                                mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                mustNotQueries.Add(q.Exists(e => e.Field(f => f.thu_muc_id.Suffix("keyword"))));
+
+                                if (request.keySearch != null)
+                                {
+                                    shouldQueries.Add(q.Wildcard(w => w
+                                         .Field(f => f.ten.Suffix("keyword"))
+                                         .Value($"*{request.keySearch}*") // không ToLower()
+                                         .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                     ));
+                                    shouldQueries.Add(q.Match(m => m
+                                        .Field(f => f.ContentText)
+                                        .Query(request.keySearch)
+                                    ));
+                                }
+
+                                if(request.loai_tai_lieu != null)
+                                {
+                                    if(request.loai_tai_lieu == 5)//thư mục
+                                    {
+                                        mustQueries.Add(q.Term(t => t.Field(f => f.Id.Suffix("keyword")).Value("___no_result___")));
+                                    }
+                                    else
+                                    {
+                                        var extensions = GetExtensionsByLoaiTaiLieu(request.loai_tai_lieu.Value);
+                                        if (extensions.Length > 0)
+                                        {
+                                            mustQueries.Add(q.Terms(t => t
+                                                .Field(f => f.FileType.Suffix("keyword"))
+                                                .Terms(extensions)
+                                            ));
+                                        }
+                                    }
+                                }
+
+                                if (request.trang_thai != null)
+                                {
+                                    if (request.trang_thai == 1)
+                                    {
+                                        shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                    }
+                                    else
+                                    {
+                                        if(request.trang_thai == 2)
+                                        {
+                                            shouldQueries.Add(q.Bool(b => b
+                                                .MustNot(m => m
+                                                    .Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan))
+                                                )
+                                            ));
+                                        }
+                                    }
+                                }
+
+                                if (request.nguoi_dung_id != null)
+                                {
+                                    shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                        _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
+                                    )));
+                                }
+
+                                if (request.keyWord != null)
+                                {
+                                    shouldQueries.Add(q.Match(m => m
+                                        .Field(f => f.ContentText)
+                                        .Query(request.keyWord)
+                                    ));
+                                }
+
+                                if (request.ten_muc != null)
+                                {
+                                    shouldQueries.Add(q.Wildcard(w => w
+                                         .Field(f => f.ten.Suffix("keyword"))
+                                         .Value($"*{request.ten_muc}*") // không ToLower()
+                                         .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                     ));
+                                }
+
+                                if (request.ngay_tao_from != null && request.ngay_tao_to != null)
+                                {
+                                    shouldQueries.Add(q.DateRange(dr => dr
+                                        .Field(f => f.ngay_tao)
+                                        .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
+                                        .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
+                                    ));
+                                }
+
+                                if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
+                                {
+                                    shouldQueries.Add(q.DateRange(dr => dr
+                                        .Field(f => f.ngay_chinh_sua)
+                                        .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
+                                        .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
+                                    ));
+                                }
+
+                                return b.Must(mustQueries.ToArray())
+                                    .MustNot(mustNotQueries.ToArray())
+                                    .Should(shouldQueries.ToArray());
+                            }
+                        )
+                    )
+                );
+
+
+                result.AddRange(dsTaiLieu.Documents.Select(x => new ResultSearch
                 {
                     id = x.Id,
                     is_folder = false,
@@ -344,13 +494,134 @@ namespace DATN.Application.TaiLieu
                     loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
                     plain_text = x.ContentText,
                     extension = x.FileType,
-                    
-                });
-                result.AddRange(dsTaiLieu);
+                }).ToList());
 
                 //ds được chia sẻ với tôi
                 var shareDocs = _context.tai_lieu_2_nguoi_dung.Where(x => x.nguoi_dung_id == currentUser.Id).Select(x => x.tai_lieu_id);
-                var dsTaiLieuShare = _context.tai_lieu.Where(x => shareDocs.Contains(x.Id)).Select(x => new ResultSearch
+                var dsTaiLieuShare = await _client.SearchAsync<tai_lieu>(s => s
+                    .Index("tai_lieu")
+                    .Query(q =>
+                        q.Bool(b =>
+                        {
+                            var mustQueries = new List<QueryContainer>();
+                            var shouldQueries = new List<QueryContainer>();
+                            var mustNotQueries = new List<QueryContainer>();
+
+                            // mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                            // mustNotQueries.Add(q.Exists(e => e.Field(f => f.thu_muc_id.Suffix("keyword"))));
+                            if (shareDocs != null && shareDocs.Any())
+                            {
+                                mustQueries.Add(q.Terms(t => t
+                                    .Field(f => f.Id.Suffix("keyword"))
+                                    .Terms(shareDocs)
+                                ));
+                            }
+                            else
+                            {
+                                mustQueries.Add(q.Term(t => t.Field(f => f.Id.Suffix("keyword")).Value("___no_result___")));
+                            }
+
+                            if (request.keySearch != null)
+                            {
+                                shouldQueries.Add(q.Wildcard(w => w
+                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Value($"*{request.keySearch}*") // không ToLower()
+                                     .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                 ));
+                                shouldQueries.Add(q.Match(m => m
+                                    .Field(f => f.ContentText)
+                                    .Query(request.keySearch)
+                                ));
+                            }
+
+                            if (request.loai_tai_lieu != null)
+                            {
+                                if (request.loai_tai_lieu == 5)//thư mục
+                                {
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.Id.Suffix("keyword")).Value("___no_result___")));
+                                }
+                                else
+                                {
+                                    var extensions = GetExtensionsByLoaiTaiLieu(request.loai_tai_lieu.Value);
+                                    if (extensions.Length > 0)
+                                    {
+                                        mustQueries.Add(q.Terms(t => t
+                                            .Field(f => f.FileType.Suffix("keyword"))
+                                            .Terms(extensions)
+                                        ));
+                                    }
+                                }
+                            }
+
+                            if (request.trang_thai != null)
+                            {
+                                if (request.trang_thai == 1)
+                                {
+                                    shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                }
+                                else
+                                {
+                                    if (request.trang_thai == 2)
+                                    {
+                                        shouldQueries.Add(q.Bool(b => b
+                                            .MustNot(m => m
+                                                .Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan))
+                                            )
+                                        ));
+                                    }
+                                }
+                            }
+
+                            if (request.nguoi_dung_id != null)
+                            {
+                                shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                    _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
+                                )));
+                            }
+
+                            if (request.keyWord != null)
+                            {
+                                shouldQueries.Add(q.Match(m => m
+                                    .Field(f => f.ContentText)
+                                    .Query(request.keyWord)
+                                ));
+                            }
+
+                            if (request.ten_muc != null)
+                            {
+                                shouldQueries.Add(q.Wildcard(w => w
+                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Value($"*{request.ten_muc}*") // không ToLower()
+                                     .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                 ));
+                            }
+
+                            if (request.ngay_tao_from != null && request.ngay_tao_to != null)
+                            {
+                                shouldQueries.Add(q.DateRange(dr => dr
+                                    .Field(f => f.ngay_tao)
+                                    .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
+                                    .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
+                                ));
+                            }
+
+                            if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
+                            {
+                                shouldQueries.Add(q.DateRange(dr => dr
+                                    .Field(f => f.ngay_chinh_sua)
+                                    .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
+                                    .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
+                                ));
+                            }
+
+                            return b.Must(mustQueries.ToArray())
+                                .MustNot(mustNotQueries.ToArray())
+                                .Should(shouldQueries.ToArray());
+                        }
+                        )
+                    )
+                );
+                result.AddRange(dsTaiLieuShare.Documents.Select(x => new ResultSearch
                 {
                     id = x.Id,
                     is_folder = false,
@@ -361,67 +632,111 @@ namespace DATN.Application.TaiLieu
                     ten_chu_so_huu = x.nguoi_tao,
                     loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
                     plain_text = x.ContentText,
-                    extension = x.FileType
-                });
-                result.AddRange(dsTaiLieuShare);
+                    extension = x.FileType,
+                }).ToList());
 
                 // ds thư mục
-                var dsThuMuc = _context.thu_muc.Where(x => x.nguoi_tao == currentUser.tai_khoan && x.thu_muc_cha_id == null).Select(x => new ResultSearch
+                var dsThuMuc = await _client.SearchAsync<thu_muc>(s => s
+                    .Index("thu_muc")
+                    .Query(q =>
+                        q.Bool(b =>
+                        {
+                            var mustQueries = new List<QueryContainer>();
+                            var shouldQueries = new List<QueryContainer>();
+                            var mustNotQueries = new List<QueryContainer>();
+
+                            mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan.ToString())));
+                            mustNotQueries.Add(q.Exists(e => e.Field(f => f.thu_muc_cha_id.Suffix("keyword"))));
+                            if (request.keySearch != null)
+                            {
+                                shouldQueries.Add(q.Wildcard(w => w
+                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Value($"*{request.keySearch}*") // không ToLower()
+                                     .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                 ));
+                            }
+
+                            if (request.loai_tai_lieu != null)
+                            {
+                                if (request.loai_tai_lieu == 1 || request.loai_tai_lieu == 2 || request.loai_tai_lieu == 3|| request.loai_tai_lieu == 4)
+                                {
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.id.Suffix("keyword")).Value("___no_result___")));
+                                }
+                                if (request.loai_tai_lieu == 5)//thư mục
+                                {
+                                   
+                                }
+                            }
+
+                            if (request.trang_thai != null)
+                            {
+                                if (request.trang_thai == 1)
+                                {
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                }
+                                else
+                                {
+                                    if (request.trang_thai == 2)
+                                    {
+                                        mustQueries.Add(q.Bool(b => b
+                                            .MustNot(m => m
+                                                .Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan))
+                                            )
+                                        ));
+                                    }
+                                }
+                            }
+
+                            if (request.nguoi_dung_id != null)
+                            {
+                                shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                    _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
+                                )));
+                            }
+
+                            if (request.ten_muc != null)
+                            {
+                                shouldQueries.Add(q.Wildcard(w => w
+                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Value($"*{request.ten_muc}*") // không ToLower()
+                                     .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                 ));
+                            }
+
+                            if (request.ngay_tao_from != null && request.ngay_tao_to != null)
+                            {
+                                shouldQueries.Add(q.DateRange(dr => dr
+                                    .Field(f => f.ngay_tao)
+                                    .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
+                                    .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
+                                ));
+                            }
+
+                            if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
+                            {
+                                shouldQueries.Add(q.DateRange(dr => dr
+                                    .Field(f => f.ngay_chinh_sua)
+                                    .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
+                                    .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
+                                ));
+                            }
+
+                            return b.Must(mustQueries.ToArray())
+                                .MustNot(mustNotQueries.ToArray())
+                                .Should(shouldQueries.ToArray());
+                        }
+                        )
+                    )
+                );
+                result.AddRange(dsThuMuc.Documents.Select(x => new ResultSearch
                 {
                     id = x.id,
                     is_folder = true,
                     ten = x.ten,
-                    ngay_tao = x.ngay_tao,
                     ngay_sua_doi = x.ngay_chinh_sua ?? x.ngay_tao,
+                    ngay_tao = x.ngay_tao,
                     ten_chu_so_huu = x.nguoi_tao,
-                });
-                result.AddRange(dsThuMuc);
-
-
-                // QUERY -- QUERY -- QUERY
-                if (request.keySearch != null)
-                {
-                    result = result.Where(x => x.ten != null && x.ten.ToLower().Contains(request.keySearch.ToLower())).ToList(); //chỉ lấy file
-                }
-                if (request.loai_tai_lieu != null && request.loai_tai_lieu != 0)
-                {
-                    if(request.loai_tai_lieu == 5)// thư mục
-                    {
-                        result = result.Where(x => x.is_folder == true).ToList(); //chỉ lấy thư mục
-                    }
-                    else
-                    {
-                        result = result.Where(x => x.loai_tai_lieu == request.loai_tai_lieu && x.is_folder == false).ToList(); //chỉ lấy file
-                    }
-                }
-                if (request.trang_thai != null)
-                {
-                    result = result.Where(x => (request.trang_thai == 1 ? x.ten_chu_so_huu == currentUser.tai_khoan : (request.trang_thai == 2 ? x.ten_chu_so_huu != currentUser.tai_khoan : true))).ToList();
-                }
-                if (request.nguoi_dung_id != null)
-                {
-                    var nguoiDung = _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id);
-                    if(nguoiDung != null)
-                    {
-                        result = result.Where(x => x.ten_chu_so_huu == nguoiDung.tai_khoan).ToList();
-                    }
-                }
-                if (request.keyWord != null)
-                {
-                    result = result.Where(x => x.plain_text != null && x.plain_text.Contains(request.keyWord)).ToList();
-                }
-                if (request.ten_muc != null)
-                {
-                    result = result.Where(x => x.ten != null && x.ten.ToLower().Contains(request.ten_muc.ToLower())).ToList();
-                }
-                if (request.ngay_tao_from != null && request.ngay_tao_to != null)
-                {
-                    result = result.Where(x => x.ngay_sua_doi != null && x.ngay_sua_doi >= request.ngay_tao_from.Value.AddHours(7) && x.ngay_sua_doi <= request.ngay_tao_to.Value.AddHours(7)).ToList();
-                }
-                if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
-                {
-                    result = result.Where(x => x.ngay_sua_doi != null && x.ngay_sua_doi >= request.ngay_chinh_sua_from.Value.AddHours(7) && x.ngay_sua_doi <= request.ngay_chinh_sua_to.Value.AddHours(7)).ToList();
-                }
+                }).ToList());
 
                 //sort (folder trước - file sau) && sắp xếp theo ngày sửa đổi gần nhất
                 result = result.OrderByDescending(x => x.is_folder).ThenByDescending(x => x.ngay_sua_doi).ToList();
@@ -516,8 +831,8 @@ namespace DATN.Application.TaiLieu
                 {
                     throw new Exception("Chưa chọn thư mục");
                 }
-                var docs = _context.tai_lieu.Where(x => x.thu_muc_id == request.thu_muc_id).ToList();
-                var folders = _context.thu_muc.Where(x => x.thu_muc_cha_id == request.thu_muc_id).ToList();
+                // var docs = _context.tai_lieu.Where(x => x.thu_muc_id == request.thu_muc_id).ToList();
+                // var folders = _context.thu_muc.Where(x => x.thu_muc_cha_id == request.thu_muc_id).ToList();
                 var result = new List<ResultSearch>();
                 var currentUser = _context.nguoi_dung.FirstOrDefault(x => x.Id == request.current_user_id);
                 if (currentUser == null)
@@ -526,7 +841,119 @@ namespace DATN.Application.TaiLieu
                 }
 
                 // ds tài liệu
-                var dsTaiLieu = docs.Where(x => x.nguoi_tao == currentUser.tai_khoan).Select(x => new ResultSearch
+                var dsTaiLieu = await _client.SearchAsync<tai_lieu>(s => s
+                    .Index("tai_lieu")
+                    .Query(q =>
+                        q.Bool(b =>
+                        {
+                            var mustQueries = new List<QueryContainer>();
+                            var shouldQueries = new List<QueryContainer>();
+                            var mustNotQueries = new List<QueryContainer>();
+
+                            mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                            mustQueries.Add(q.Term(t => t.Field(f => f.thu_muc_id.Suffix("keyword")).Value(request.thu_muc_id)));
+
+                            if (request.keySearch != null)
+                            {
+                                shouldQueries.Add(q.Wildcard(w => w
+                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Value($"*{request.keySearch}*") // không ToLower()
+                                     .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                 ));
+                                shouldQueries.Add(q.Match(m => m
+                                    .Field(f => f.ContentText)
+                                    .Query(request.keySearch)
+                                ));
+                            }
+
+                            if (request.loai_tai_lieu != null)
+                            {
+                                if (request.loai_tai_lieu == 5)//thư mục
+                                {
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.Id.Suffix("keyword")).Value("___no_result___")));
+                                }
+                                else
+                                {
+                                    var extensions = GetExtensionsByLoaiTaiLieu(request.loai_tai_lieu.Value);
+                                    if (extensions.Length > 0)
+                                    {
+                                        mustQueries.Add(q.Terms(t => t
+                                            .Field(f => f.FileType.Suffix("keyword"))
+                                            .Terms(extensions)
+                                        ));
+                                    }
+                                }
+                            }
+
+                            if (request.trang_thai != null)
+                            {
+                                if (request.trang_thai == 1)
+                                {
+                                    shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                }
+                                else
+                                {
+                                    if (request.trang_thai == 2)
+                                    {
+                                        shouldQueries.Add(q.Bool(b => b
+                                            .MustNot(m => m
+                                                .Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan))
+                                            )
+                                        ));
+                                    }
+                                }
+                            }
+
+                            if (request.nguoi_dung_id != null)
+                            {
+                                shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                    _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
+                                )));
+                            }
+
+                            if (request.keyWord != null)
+                            {
+                                shouldQueries.Add(q.Match(m => m
+                                    .Field(f => f.ContentText)
+                                    .Query(request.keyWord)
+                                ));
+                            }
+
+                            if (request.ten_muc != null)
+                            {
+                                shouldQueries.Add(q.Wildcard(w => w
+                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Value($"*{request.ten_muc}*") // không ToLower()
+                                     .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                 ));
+                            }
+
+                            if (request.ngay_tao_from != null && request.ngay_tao_to != null)
+                            {
+                                shouldQueries.Add(q.DateRange(dr => dr
+                                    .Field(f => f.ngay_tao)
+                                    .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
+                                    .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
+                                ));
+                            }
+
+                            if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
+                            {
+                                shouldQueries.Add(q.DateRange(dr => dr
+                                    .Field(f => f.ngay_chinh_sua)
+                                    .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
+                                    .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
+                                ));
+                            }
+
+                            return b.Must(mustQueries.ToArray())
+                                .MustNot(mustNotQueries.ToArray())
+                                .Should(shouldQueries.ToArray());
+                        }
+                        )
+                    )
+                );
+                result.AddRange(dsTaiLieu.Documents.Select(x => new ResultSearch
                 {
                     id = x.Id,
                     is_folder = false,
@@ -538,13 +965,137 @@ namespace DATN.Application.TaiLieu
                     loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
                     plain_text = x.ContentText,
                     extension = x.FileType,
-
-                });
-                result.AddRange(dsTaiLieu);
+                }).ToList());
 
                 //ds được chia sẻ với tôi
                 var shareDocs = _context.tai_lieu_2_nguoi_dung.Where(x => x.nguoi_dung_id == currentUser.Id).Select(x => x.tai_lieu_id);
-                var dsTaiLieuShare = docs.Where(x => shareDocs.Contains(x.Id)).Select(x => new ResultSearch
+                var dsTaiLieuShare = await _client.SearchAsync<tai_lieu>(s => s
+                    .Index("tai_lieu")
+                    .Query(q =>
+                        q.Bool(b =>
+                        {
+                            var mustQueries = new List<QueryContainer>();
+                            var shouldQueries = new List<QueryContainer>();
+                            var mustNotQueries = new List<QueryContainer>();
+
+                            // mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                            // mustNotQueries.Add(q.Exists(e => e.Field(f => f.thu_muc_id.Suffix("keyword"))));
+                           
+                            if (shareDocs != null && shareDocs.Any())
+                            {
+                                mustQueries.Add(q.Terms(t => t
+                                   .Field(f => f.Id.Suffix("keyword"))
+                                   .Terms(shareDocs)
+                               ));
+                                mustQueries.Add(q.Term(t => t.Field(f => f.thu_muc_id.Suffix("keyword")).Value(request.thu_muc_id)));
+                            }
+                            else
+                            {
+                                mustQueries.Add(q.Term(t => t.Field(f => f.Id.Suffix("keyword")).Value("___no_result___")));
+                            }
+
+
+                            if (request.keySearch != null)
+                            {
+                                shouldQueries.Add(q.Wildcard(w => w
+                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Value($"*{request.keySearch}*") // không ToLower()
+                                     .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                 ));
+                                shouldQueries.Add(q.Match(m => m
+                                    .Field(f => f.ContentText)
+                                    .Query(request.keySearch)
+                                ));
+                            }
+
+                            if (request.loai_tai_lieu != null)
+                            {
+                                if (request.loai_tai_lieu == 5)//thư mục
+                                {
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.Id.Suffix("keyword")).Value("___no_result___")));
+                                }
+                                else
+                                {
+                                    var extensions = GetExtensionsByLoaiTaiLieu(request.loai_tai_lieu.Value);
+                                    if (extensions.Length > 0)
+                                    {
+                                        mustQueries.Add(q.Terms(t => t
+                                            .Field(f => f.FileType.Suffix("keyword"))
+                                            .Terms(extensions)
+                                        ));
+                                    }
+                                }
+                            }
+
+                            if (request.trang_thai != null)
+                            {
+                                if (request.trang_thai == 1)
+                                {
+                                    shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                }
+                                else
+                                {
+                                    if (request.trang_thai == 2)
+                                    {
+                                        shouldQueries.Add(q.Bool(b => b
+                                            .MustNot(m => m
+                                                .Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan))
+                                            )
+                                        ));
+                                    }
+                                }
+                            }
+
+                            if (request.nguoi_dung_id != null)
+                            {
+                                shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                    _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
+                                )));
+                            }
+
+                            if (request.keyWord != null)
+                            {
+                                shouldQueries.Add(q.Match(m => m
+                                    .Field(f => f.ContentText)
+                                    .Query(request.keyWord)
+                                ));
+                            }
+
+                            if (request.ten_muc != null)
+                            {
+                                shouldQueries.Add(q.Wildcard(w => w
+                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Value($"*{request.ten_muc}*") // không ToLower()
+                                     .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                 ));
+                            }
+
+                            if (request.ngay_tao_from != null && request.ngay_tao_to != null)
+                            {
+                                shouldQueries.Add(q.DateRange(dr => dr
+                                    .Field(f => f.ngay_tao)
+                                    .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
+                                    .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
+                                ));
+                            }
+
+                            if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
+                            {
+                                shouldQueries.Add(q.DateRange(dr => dr
+                                    .Field(f => f.ngay_chinh_sua)
+                                    .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
+                                    .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
+                                ));
+                            }
+
+                            return b.Must(mustQueries.ToArray())
+                                .MustNot(mustNotQueries.ToArray())
+                                .Should(shouldQueries.ToArray());
+                        }
+                        )
+                    )
+                );
+                result.AddRange(dsTaiLieuShare.Documents.Select(x => new ResultSearch
                 {
                     id = x.Id,
                     is_folder = false,
@@ -555,21 +1106,111 @@ namespace DATN.Application.TaiLieu
                     ten_chu_so_huu = x.nguoi_tao,
                     loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
                     plain_text = x.ContentText,
-                    extension = x.FileType
-                });
-                result.AddRange(dsTaiLieuShare);
+                    extension = x.FileType,
+                }).ToList());
 
                 // ds thư mục
-                var dsThuMuc = folders.Where(x => x.nguoi_tao == currentUser.tai_khoan).Select(x => new ResultSearch
+                var dsThuMuc = await _client.SearchAsync<thu_muc>(s => s
+                    .Index("thu_muc")
+                    .Query(q =>
+                        q.Bool(b =>
+                        {
+                            var mustQueries = new List<QueryContainer>();
+                            var shouldQueries = new List<QueryContainer>();
+                            var mustNotQueries = new List<QueryContainer>();
+
+                            mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan.ToString())));
+                            mustQueries.Add(q.Term(t => t.Field(f => f.thu_muc_cha_id.Suffix("keyword")).Value(request.thu_muc_id)));
+                            if (request.keySearch != null)
+                            {
+                                shouldQueries.Add(q.Wildcard(w => w
+                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Value($"*{request.keySearch}*") // không ToLower()
+                                     .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                 ));
+                            }
+
+                            if (request.loai_tai_lieu != null)
+                            {
+                                if (request.loai_tai_lieu == 1 || request.loai_tai_lieu == 1 || request.loai_tai_lieu == 2 || request.loai_tai_lieu == 3 || request.loai_tai_lieu == 4)
+                                {
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.id.Suffix("keyword")).Value("___no_result___")));
+                                }
+                                if (request.loai_tai_lieu == 5)//thư mục
+                                {
+
+                                }
+                            }
+
+                            if (request.trang_thai != null)
+                            {
+                                if (request.trang_thai == 1)
+                                {
+                                    shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                }
+                                else
+                                {
+                                    if (request.trang_thai == 2)
+                                    {
+                                        shouldQueries.Add(q.Bool(b => b
+                                            .MustNot(m => m
+                                                .Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan))
+                                            )
+                                        ));
+                                    }
+                                }
+                            }
+
+                            if (request.nguoi_dung_id != null)
+                            {
+                                shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                    _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
+                                )));
+                            }
+
+                            if (request.ten_muc != null)
+                            {
+                                shouldQueries.Add(q.Wildcard(w => w
+                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Value($"*{request.ten_muc}*") // không ToLower()
+                                     .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                 ));
+                            }
+
+                            if (request.ngay_tao_from != null && request.ngay_tao_to != null)
+                            {
+                                shouldQueries.Add(q.DateRange(dr => dr
+                                    .Field(f => f.ngay_tao)
+                                    .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
+                                    .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
+                                ));
+                            }
+
+                            if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
+                            {
+                                shouldQueries.Add(q.DateRange(dr => dr
+                                    .Field(f => f.ngay_chinh_sua)
+                                    .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
+                                    .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
+                                ));
+                            }
+
+                            return b.Must(mustQueries.ToArray())
+                                .MustNot(mustNotQueries.ToArray())
+                                .Should(shouldQueries.ToArray());
+                        }
+                        )
+                    )
+                );
+                result.AddRange(dsThuMuc.Documents.Select(x => new ResultSearch
                 {
                     id = x.id,
                     is_folder = true,
                     ten = x.ten,
-                    ngay_tao = x.ngay_tao,
                     ngay_sua_doi = x.ngay_chinh_sua ?? x.ngay_tao,
+                    ngay_tao = x.ngay_tao,
                     ten_chu_so_huu = x.nguoi_tao,
-                });
-                result.AddRange(dsThuMuc);
+                }).ToList());
 
 
                 // QUERY -- QUERY -- QUERY
@@ -739,7 +1380,19 @@ namespace DATN.Application.TaiLieu
 
                 _context.tai_lieu.Update(doc);
                 await _context.SaveChangesAsync();
+                var updateResponse = await _client.UpdateAsync<tai_lieu>(doc.Id.ToString(), u => u
+                    .Index("tai_lieu")
+                    .Doc(new tai_lieu
+                    {
+                        ten = doc.ten,
+                        duong_dan = doc.duong_dan
+                    })
+                );
 
+                if (!updateResponse.IsValid)
+                {
+                    Console.WriteLine($"[ES] Cập nhật thất bại: {updateResponse.ServerError?.Error.Reason}");
+                }
                 return "Đổi tên tài liệu và file trên server thành công!";
             }
             catch (Exception ex)
@@ -773,6 +1426,15 @@ namespace DATN.Application.TaiLieu
                 // 5️⃣ Xóa bản ghi trong database
                 _context.tai_lieu.Remove(doc);
                 await _context.SaveChangesAsync();
+
+                // Xóa trong Elasticsearch
+                var esResponse = await _client.DeleteAsync<tai_lieu>(id, d => d.Index("tai_lieu"));
+
+                if (!esResponse.IsValid)
+                {
+                    // Có thể log lại lỗi nhưng KHÔNG throw để tránh rollback DB
+                    Console.WriteLine($"⚠️ Không thể xóa trong Elasticsearch: {esResponse.OriginalException?.Message}");
+                }
 
                 return "Xóa tài liệu thành công!";
             }
@@ -816,6 +1478,19 @@ namespace DATN.Application.TaiLieu
                 // 4️⃣ Xóa các bản ghi trong DB
                 _context.tai_lieu.RemoveRange(docs);
                 await _context.SaveChangesAsync();
+
+                var bulkResponse = await _client.BulkAsync(b => b
+                    .Index("tai_lieu")
+                    .DeleteMany(docs, (op, doc) => op.Id(doc.Id.ToString()))
+                );
+
+                if (bulkResponse.Errors)
+                {
+                    // Nếu có lỗi khi xóa trong ES → ghi chi tiết log
+                    var errorItems = string.Join(", ",
+                        bulkResponse.ItemsWithErrors.Select(i => $"{i.Id}:{i.Error.Reason}"));
+                    Console.WriteLine($"[ES] Lỗi khi xóa document: {errorItems}");
+                }
 
                 return $"Đã xóa thành công {docs.Count} tài liệu!";
             }

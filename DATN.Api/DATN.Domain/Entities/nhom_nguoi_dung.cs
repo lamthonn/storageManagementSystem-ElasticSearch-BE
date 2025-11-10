@@ -14,6 +14,7 @@ namespace DATN.Domain.Entities
         public string ten { get; set; }
         public string? mo_ta { get; set; }
         public int trang_thai { get; set; }
+        public int cap_do { get; set; }
         public virtual ICollection<nguoi_dung_2_nhom_nguoi_dung> ds_nguoi_dung { get; set; }
         public virtual ICollection<nhom_nguoi_dung_2_dieu_huong> ds_dieu_huong { get; set; }
         public virtual ICollection<nhom_nguoi_dung_2_command> ds_dm_command { get; set; }
