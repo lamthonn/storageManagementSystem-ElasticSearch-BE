@@ -374,7 +374,6 @@ namespace DATN.Application.TaiLieu
                         q.Bool(b =>
                             {
                                 var mustQueries = new List<QueryContainer>();
-                                var shouldQueries = new List<QueryContainer>();
                                 var mustNotQueries = new List<QueryContainer>();
                                 
                                 mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
@@ -382,12 +381,12 @@ namespace DATN.Application.TaiLieu
 
                                 if (request.keySearch != null)
                                 {
-                                    shouldQueries.Add(q.Wildcard(w => w
+                                    mustQueries.Add(q.Wildcard(w => w
                                          .Field(f => f.ten.Suffix("keyword"))
                                          .Value($"*{request.keySearch}*") // không ToLower()
                                          .CaseInsensitive(true) // giữ nếu ES >= 7.10
                                      ));
-                                    shouldQueries.Add(q.Match(m => m
+                                    mustQueries.Add(q.Match(m => m
                                         .Field(f => f.ContentText)
                                         .Query(request.keySearch)
                                     ));
@@ -416,13 +415,13 @@ namespace DATN.Application.TaiLieu
                                 {
                                     if (request.trang_thai == 1)
                                     {
-                                        shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                        mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
                                     }
                                     else
                                     {
                                         if(request.trang_thai == 2)
                                         {
-                                            shouldQueries.Add(q.Bool(b => b
+                                            mustQueries.Add(q.Bool(b => b
                                                 .MustNot(m => m
                                                     .Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan))
                                                 )
@@ -433,14 +432,14 @@ namespace DATN.Application.TaiLieu
 
                                 if (request.nguoi_dung_id != null)
                                 {
-                                    shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
                                         _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
                                     )));
                                 }
 
                                 if (request.keyWord != null)
                                 {
-                                    shouldQueries.Add(q.Match(m => m
+                                    mustQueries.Add(q.Match(m => m
                                         .Field(f => f.ContentText)
                                         .Query(request.keyWord)
                                     ));
@@ -448,7 +447,7 @@ namespace DATN.Application.TaiLieu
 
                                 if (request.ten_muc != null)
                                 {
-                                    shouldQueries.Add(q.Wildcard(w => w
+                                    mustQueries.Add(q.Wildcard(w => w
                                          .Field(f => f.ten.Suffix("keyword"))
                                          .Value($"*{request.ten_muc}*") // không ToLower()
                                          .CaseInsensitive(true) // giữ nếu ES >= 7.10
@@ -457,7 +456,7 @@ namespace DATN.Application.TaiLieu
 
                                 if (request.ngay_tao_from != null && request.ngay_tao_to != null)
                                 {
-                                    shouldQueries.Add(q.DateRange(dr => dr
+                                    mustQueries.Add(q.DateRange(dr => dr
                                         .Field(f => f.ngay_tao)
                                         .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
                                         .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
@@ -466,7 +465,7 @@ namespace DATN.Application.TaiLieu
 
                                 if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
                                 {
-                                    shouldQueries.Add(q.DateRange(dr => dr
+                                    mustQueries.Add(q.DateRange(dr => dr
                                         .Field(f => f.ngay_chinh_sua)
                                         .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
                                         .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
@@ -474,8 +473,7 @@ namespace DATN.Application.TaiLieu
                                 }
 
                                 return b.Must(mustQueries.ToArray())
-                                    .MustNot(mustNotQueries.ToArray())
-                                    .Should(shouldQueries.ToArray());
+                                    .MustNot(mustNotQueries.ToArray());
                             }
                         )
                     )
@@ -504,7 +502,6 @@ namespace DATN.Application.TaiLieu
                         q.Bool(b =>
                         {
                             var mustQueries = new List<QueryContainer>();
-                            var shouldQueries = new List<QueryContainer>();
                             var mustNotQueries = new List<QueryContainer>();
 
                             // mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
@@ -523,12 +520,12 @@ namespace DATN.Application.TaiLieu
 
                             if (request.keySearch != null)
                             {
-                                shouldQueries.Add(q.Wildcard(w => w
+                                mustQueries.Add(q.Wildcard(w => w
                                      .Field(f => f.ten.Suffix("keyword"))
                                      .Value($"*{request.keySearch}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
                                  ));
-                                shouldQueries.Add(q.Match(m => m
+                                mustQueries.Add(q.Match(m => m
                                     .Field(f => f.ContentText)
                                     .Query(request.keySearch)
                                 ));
@@ -557,13 +554,13 @@ namespace DATN.Application.TaiLieu
                             {
                                 if (request.trang_thai == 1)
                                 {
-                                    shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
                                 }
                                 else
                                 {
                                     if (request.trang_thai == 2)
                                     {
-                                        shouldQueries.Add(q.Bool(b => b
+                                        mustQueries.Add(q.Bool(b => b
                                             .MustNot(m => m
                                                 .Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan))
                                             )
@@ -574,14 +571,14 @@ namespace DATN.Application.TaiLieu
 
                             if (request.nguoi_dung_id != null)
                             {
-                                shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
                                     _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
                                 )));
                             }
 
                             if (request.keyWord != null)
                             {
-                                shouldQueries.Add(q.Match(m => m
+                                mustQueries.Add(q.Match(m => m
                                     .Field(f => f.ContentText)
                                     .Query(request.keyWord)
                                 ));
@@ -589,7 +586,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ten_muc != null)
                             {
-                                shouldQueries.Add(q.Wildcard(w => w
+                                mustQueries.Add(q.Wildcard(w => w
                                      .Field(f => f.ten.Suffix("keyword"))
                                      .Value($"*{request.ten_muc}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
@@ -598,7 +595,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ngay_tao_from != null && request.ngay_tao_to != null)
                             {
-                                shouldQueries.Add(q.DateRange(dr => dr
+                                mustQueries.Add(q.DateRange(dr => dr
                                     .Field(f => f.ngay_tao)
                                     .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
                                     .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
@@ -607,7 +604,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
                             {
-                                shouldQueries.Add(q.DateRange(dr => dr
+                                mustQueries.Add(q.DateRange(dr => dr
                                     .Field(f => f.ngay_chinh_sua)
                                     .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
                                     .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
@@ -615,8 +612,7 @@ namespace DATN.Application.TaiLieu
                             }
 
                             return b.Must(mustQueries.ToArray())
-                                .MustNot(mustNotQueries.ToArray())
-                                .Should(shouldQueries.ToArray());
+                                .MustNot(mustNotQueries.ToArray());
                         }
                         )
                     )
@@ -642,14 +638,13 @@ namespace DATN.Application.TaiLieu
                         q.Bool(b =>
                         {
                             var mustQueries = new List<QueryContainer>();
-                            var shouldQueries = new List<QueryContainer>();
                             var mustNotQueries = new List<QueryContainer>();
 
                             mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan.ToString())));
                             mustNotQueries.Add(q.Exists(e => e.Field(f => f.thu_muc_cha_id.Suffix("keyword"))));
                             if (request.keySearch != null)
                             {
-                                shouldQueries.Add(q.Wildcard(w => w
+                                mustQueries.Add(q.Wildcard(w => w
                                      .Field(f => f.ten.Suffix("keyword"))
                                      .Value($"*{request.keySearch}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
@@ -689,14 +684,14 @@ namespace DATN.Application.TaiLieu
 
                             if (request.nguoi_dung_id != null)
                             {
-                                shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
                                     _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
                                 )));
                             }
 
                             if (request.ten_muc != null)
                             {
-                                shouldQueries.Add(q.Wildcard(w => w
+                                mustQueries.Add(q.Wildcard(w => w
                                      .Field(f => f.ten.Suffix("keyword"))
                                      .Value($"*{request.ten_muc}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
@@ -705,7 +700,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ngay_tao_from != null && request.ngay_tao_to != null)
                             {
-                                shouldQueries.Add(q.DateRange(dr => dr
+                                mustQueries.Add(q.DateRange(dr => dr
                                     .Field(f => f.ngay_tao)
                                     .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
                                     .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
@@ -714,7 +709,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
                             {
-                                shouldQueries.Add(q.DateRange(dr => dr
+                                mustQueries.Add(q.DateRange(dr => dr
                                     .Field(f => f.ngay_chinh_sua)
                                     .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
                                     .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
@@ -722,8 +717,7 @@ namespace DATN.Application.TaiLieu
                             }
 
                             return b.Must(mustQueries.ToArray())
-                                .MustNot(mustNotQueries.ToArray())
-                                .Should(shouldQueries.ToArray());
+                                .MustNot(mustNotQueries.ToArray());
                         }
                         )
                     )
@@ -847,7 +841,6 @@ namespace DATN.Application.TaiLieu
                         q.Bool(b =>
                         {
                             var mustQueries = new List<QueryContainer>();
-                            var shouldQueries = new List<QueryContainer>();
                             var mustNotQueries = new List<QueryContainer>();
 
                             mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
@@ -855,12 +848,12 @@ namespace DATN.Application.TaiLieu
 
                             if (request.keySearch != null)
                             {
-                                shouldQueries.Add(q.Wildcard(w => w
+                                mustQueries.Add(q.Wildcard(w => w
                                      .Field(f => f.ten.Suffix("keyword"))
                                      .Value($"*{request.keySearch}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
                                  ));
-                                shouldQueries.Add(q.Match(m => m
+                                mustQueries.Add(q.Match(m => m
                                     .Field(f => f.ContentText)
                                     .Query(request.keySearch)
                                 ));
@@ -889,13 +882,13 @@ namespace DATN.Application.TaiLieu
                             {
                                 if (request.trang_thai == 1)
                                 {
-                                    shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
                                 }
                                 else
                                 {
                                     if (request.trang_thai == 2)
                                     {
-                                        shouldQueries.Add(q.Bool(b => b
+                                        mustQueries.Add(q.Bool(b => b
                                             .MustNot(m => m
                                                 .Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan))
                                             )
@@ -906,14 +899,14 @@ namespace DATN.Application.TaiLieu
 
                             if (request.nguoi_dung_id != null)
                             {
-                                shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
                                     _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
                                 )));
                             }
 
                             if (request.keyWord != null)
                             {
-                                shouldQueries.Add(q.Match(m => m
+                                mustQueries.Add(q.Match(m => m
                                     .Field(f => f.ContentText)
                                     .Query(request.keyWord)
                                 ));
@@ -921,7 +914,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ten_muc != null)
                             {
-                                shouldQueries.Add(q.Wildcard(w => w
+                                mustQueries.Add(q.Wildcard(w => w
                                      .Field(f => f.ten.Suffix("keyword"))
                                      .Value($"*{request.ten_muc}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
@@ -930,7 +923,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ngay_tao_from != null && request.ngay_tao_to != null)
                             {
-                                shouldQueries.Add(q.DateRange(dr => dr
+                                mustQueries.Add(q.DateRange(dr => dr
                                     .Field(f => f.ngay_tao)
                                     .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
                                     .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
@@ -939,7 +932,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
                             {
-                                shouldQueries.Add(q.DateRange(dr => dr
+                                mustQueries.Add(q.DateRange(dr => dr
                                     .Field(f => f.ngay_chinh_sua)
                                     .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
                                     .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
@@ -947,8 +940,7 @@ namespace DATN.Application.TaiLieu
                             }
 
                             return b.Must(mustQueries.ToArray())
-                                .MustNot(mustNotQueries.ToArray())
-                                .Should(shouldQueries.ToArray());
+                                .MustNot(mustNotQueries.ToArray());
                         }
                         )
                     )
@@ -975,7 +967,6 @@ namespace DATN.Application.TaiLieu
                         q.Bool(b =>
                         {
                             var mustQueries = new List<QueryContainer>();
-                            var shouldQueries = new List<QueryContainer>();
                             var mustNotQueries = new List<QueryContainer>();
 
                             // mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
@@ -997,12 +988,12 @@ namespace DATN.Application.TaiLieu
 
                             if (request.keySearch != null)
                             {
-                                shouldQueries.Add(q.Wildcard(w => w
+                                mustQueries.Add(q.Wildcard(w => w
                                      .Field(f => f.ten.Suffix("keyword"))
                                      .Value($"*{request.keySearch}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
                                  ));
-                                shouldQueries.Add(q.Match(m => m
+                                mustQueries.Add(q.Match(m => m
                                     .Field(f => f.ContentText)
                                     .Query(request.keySearch)
                                 ));
@@ -1031,13 +1022,13 @@ namespace DATN.Application.TaiLieu
                             {
                                 if (request.trang_thai == 1)
                                 {
-                                    shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
                                 }
                                 else
                                 {
                                     if (request.trang_thai == 2)
                                     {
-                                        shouldQueries.Add(q.Bool(b => b
+                                        mustQueries.Add(q.Bool(b => b
                                             .MustNot(m => m
                                                 .Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan))
                                             )
@@ -1048,14 +1039,14 @@ namespace DATN.Application.TaiLieu
 
                             if (request.nguoi_dung_id != null)
                             {
-                                shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
                                     _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
                                 )));
                             }
 
                             if (request.keyWord != null)
                             {
-                                shouldQueries.Add(q.Match(m => m
+                                mustQueries.Add(q.Match(m => m
                                     .Field(f => f.ContentText)
                                     .Query(request.keyWord)
                                 ));
@@ -1063,7 +1054,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ten_muc != null)
                             {
-                                shouldQueries.Add(q.Wildcard(w => w
+                                mustQueries.Add(q.Wildcard(w => w
                                      .Field(f => f.ten.Suffix("keyword"))
                                      .Value($"*{request.ten_muc}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
@@ -1072,7 +1063,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ngay_tao_from != null && request.ngay_tao_to != null)
                             {
-                                shouldQueries.Add(q.DateRange(dr => dr
+                                mustQueries.Add(q.DateRange(dr => dr
                                     .Field(f => f.ngay_tao)
                                     .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
                                     .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
@@ -1081,7 +1072,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
                             {
-                                shouldQueries.Add(q.DateRange(dr => dr
+                                mustQueries.Add(q.DateRange(dr => dr
                                     .Field(f => f.ngay_chinh_sua)
                                     .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
                                     .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
@@ -1089,8 +1080,7 @@ namespace DATN.Application.TaiLieu
                             }
 
                             return b.Must(mustQueries.ToArray())
-                                .MustNot(mustNotQueries.ToArray())
-                                .Should(shouldQueries.ToArray());
+                                .MustNot(mustNotQueries.ToArray());
                         }
                         )
                     )
@@ -1116,14 +1106,13 @@ namespace DATN.Application.TaiLieu
                         q.Bool(b =>
                         {
                             var mustQueries = new List<QueryContainer>();
-                            var shouldQueries = new List<QueryContainer>();
                             var mustNotQueries = new List<QueryContainer>();
 
                             mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan.ToString())));
                             mustQueries.Add(q.Term(t => t.Field(f => f.thu_muc_cha_id.Suffix("keyword")).Value(request.thu_muc_id)));
                             if (request.keySearch != null)
                             {
-                                shouldQueries.Add(q.Wildcard(w => w
+                                mustQueries.Add(q.Wildcard(w => w
                                      .Field(f => f.ten.Suffix("keyword"))
                                      .Value($"*{request.keySearch}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
@@ -1146,13 +1135,13 @@ namespace DATN.Application.TaiLieu
                             {
                                 if (request.trang_thai == 1)
                                 {
-                                    shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
                                 }
                                 else
                                 {
                                     if (request.trang_thai == 2)
                                     {
-                                        shouldQueries.Add(q.Bool(b => b
+                                        mustQueries.Add(q.Bool(b => b
                                             .MustNot(m => m
                                                 .Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan))
                                             )
@@ -1163,14 +1152,14 @@ namespace DATN.Application.TaiLieu
 
                             if (request.nguoi_dung_id != null)
                             {
-                                shouldQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
+                                mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(
                                     _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id)!.tai_khoan
                                 )));
                             }
 
                             if (request.ten_muc != null)
                             {
-                                shouldQueries.Add(q.Wildcard(w => w
+                                mustQueries.Add(q.Wildcard(w => w
                                      .Field(f => f.ten.Suffix("keyword"))
                                      .Value($"*{request.ten_muc}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
@@ -1179,7 +1168,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ngay_tao_from != null && request.ngay_tao_to != null)
                             {
-                                shouldQueries.Add(q.DateRange(dr => dr
+                                mustQueries.Add(q.DateRange(dr => dr
                                     .Field(f => f.ngay_tao)
                                     .GreaterThanOrEquals(request.ngay_tao_from.Value.AddHours(7))
                                     .LessThanOrEquals(request.ngay_tao_to.Value.AddHours(7))
@@ -1188,7 +1177,7 @@ namespace DATN.Application.TaiLieu
 
                             if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
                             {
-                                shouldQueries.Add(q.DateRange(dr => dr
+                                mustQueries.Add(q.DateRange(dr => dr
                                     .Field(f => f.ngay_chinh_sua)
                                     .GreaterThanOrEquals(request.ngay_chinh_sua_from.Value.AddHours(7))
                                     .LessThanOrEquals(request.ngay_chinh_sua_to.Value.AddHours(7))
@@ -1196,8 +1185,7 @@ namespace DATN.Application.TaiLieu
                             }
 
                             return b.Must(mustQueries.ToArray())
-                                .MustNot(mustNotQueries.ToArray())
-                                .Should(shouldQueries.ToArray());
+                                .MustNot(mustNotQueries.ToArray());
                         }
                         )
                     )
