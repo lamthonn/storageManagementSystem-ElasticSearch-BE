@@ -52,7 +52,6 @@ namespace DATN.Application.DanhMucCapDo
                         ma = x.ma,
                         ten = x.ten,
                         mo_ta = x.mo_ta,
-                        cap_do = x.cap_do,
                         trang_thai = x.trang_thai,
                         ngay_tao = x.ngay_tao,
                         nguoi_tao = x.nguoi_tao,
@@ -78,7 +77,6 @@ namespace DATN.Application.DanhMucCapDo
                     ma = entity.ma,
                     ten = entity.ten,
                     mo_ta = entity.mo_ta,
-                    cap_do = entity.cap_do,
                     trang_thai = entity.trang_thai,
                     ngay_tao = entity.ngay_tao,
                     nguoi_tao = entity.nguoi_tao,
@@ -102,7 +100,6 @@ namespace DATN.Application.DanhMucCapDo
                     ma = obj.ma,
                     ten = obj.ten,
                     mo_ta = obj.mo_ta,
-                    cap_do = obj.cap_do,
                     trang_thai = obj.trang_thai ?? true,
                     ngay_tao = DateTime.Now,
                     nguoi_tao = obj.nguoi_tao
@@ -141,7 +138,6 @@ namespace DATN.Application.DanhMucCapDo
                 entity.ten = obj.ten;
                 entity.ma = obj.ma;
                 entity.mo_ta = obj.mo_ta;
-                entity.cap_do = obj.cap_do;
                 entity.trang_thai = obj.trang_thai ?? true;
                 entity.ngay_chinh_sua = DateTime.Now;
                 entity.nguoi_chinh_sua = obj.nguoi_chinh_sua;
