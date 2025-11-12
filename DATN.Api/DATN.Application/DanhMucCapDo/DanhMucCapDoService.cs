@@ -62,8 +62,7 @@ namespace DATN.Application.DanhMucCapDo
                 var result = await PaginatedList<danh_muc_dto>.Create(dataQueryDto, request.pageNumber, request.pageSize);
                 return result;
             }
-            catch (Exception ex) { throw new Exception(ex.Message); }
-        }
+            catch (Exception ex) { throw new Exception($"Lỗi khi lấy dữ liệu Cấp độ: {ex.Message + ex.StackTrace}"); }}
 
         public async Task<danh_muc_dto> GetById(Guid id)
         {
