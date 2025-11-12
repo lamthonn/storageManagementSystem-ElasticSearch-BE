@@ -4,6 +4,7 @@ using DATN.Domain.DTO;
 using DATN.Domain.Entities;
 using DATN.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Nest;
 using System;
 using System.Collections.Generic;
@@ -19,13 +20,21 @@ namespace DATN.Application.ThuMuc
         private readonly INhatKyHeThong _logger;
         private readonly Helper _helper;
         private readonly ElasticClient _client;
+        private readonly IConfiguration _config;
 
-        public ThuMucService(AppDbContext context, INhatKyHeThong logger, Helper helper, ElasticClient client) 
+        public ThuMucService(AppDbContext context, INhatKyHeThong logger, Helper helper, ElasticClient client, IConfiguration config) 
         {
+            _config = config;
             _context = context;
             _logger = logger;
             _helper = helper;
             _client = client;
+
+            var elasticUrl = _config.GetSection("ElasticSearchUrl")["path"] ?? "http://localhost:9200";
+            var settings = new ConnectionSettings(new Uri(elasticUrl))
+            .DefaultIndex("thu_muc")
+            .PrettyJson()
+            .DisableDirectStreaming();
         }
         public async Task<thu_muc_dto> AddThuMuc(thu_muc_dto request)
         {

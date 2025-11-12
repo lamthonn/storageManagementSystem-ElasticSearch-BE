@@ -1,4 +1,5 @@
 ﻿using DATN.Domain.Entities;
+using Microsoft.Extensions.Configuration;
 using Nest;
 using System;
 using System.Collections.Generic;
@@ -12,9 +13,14 @@ namespace DATN.Application.Utils
     {
         private readonly ElasticClient _client;
         private readonly string _indexName = "tai_lieu";
-        public ElasticSearchService()
+        private readonly IConfiguration _config;
+
+        public ElasticSearchService(IConfiguration config)
         {
-            var settings = new ConnectionSettings(new Uri("http://localhost:9200"))
+            _config = config;
+            var elasticUrl = _config.GetSection("ElasticSearchUrl")["path"] ?? "http://localhost:9200";
+
+            var settings = new ConnectionSettings(new Uri(elasticUrl))
             .DefaultIndex(_indexName)
             .PrettyJson()
             .DisableDirectStreaming();
