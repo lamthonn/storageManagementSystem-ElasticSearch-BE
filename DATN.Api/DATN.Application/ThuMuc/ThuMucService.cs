@@ -28,14 +28,16 @@ namespace DATN.Application.ThuMuc
             _context = context;
             _logger = logger;
             _helper = helper;
-            _client = client;
 
             var elasticUrl = _config.GetSection("ElasticSearchUrl")["path"] ?? "http://localhost:9200";
             var settings = new ConnectionSettings(new Uri(elasticUrl))
             .DefaultIndex("thu_muc")
             .PrettyJson()
             .DisableDirectStreaming();
+
+            _client = new ElasticClient(settings);
         }
+        public ElasticClient Client => _client;
         public async Task<thu_muc_dto> AddThuMuc(thu_muc_dto request)
         {
             try

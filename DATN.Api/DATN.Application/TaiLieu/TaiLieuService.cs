@@ -38,15 +38,16 @@ namespace DATN.Application.TaiLieu
             _logger = logger;
             _config = config;
             _elastic = elastic;
-            _client = client;
 
             var elasticUrl = _config.GetSection("ElasticSearchUrl")["path"] ?? "http://localhost:9200";
             var settings = new ConnectionSettings(new Uri(elasticUrl))
             .DefaultIndex("tai_lieu")
             .PrettyJson()
             .DisableDirectStreaming();
-        }
 
+            _client = new ElasticClient(settings);
+        }
+        public ElasticClient Client => _client;
         public async Task<IActionResult> AddTaiLieu(uploadedFileInfo request)
         {
             try
