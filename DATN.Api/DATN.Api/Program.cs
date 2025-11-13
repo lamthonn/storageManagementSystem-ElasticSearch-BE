@@ -79,8 +79,23 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var AdminDbContextInitial = scope.ServiceProvider.GetRequiredService<DbContextInitial>();
+        await AdminDbContextInitial.InitialiseAsync();
+    }
+    catch (Exception ex)
+    {
+        throw new Exception(ex.Message + ex.StackTrace);
+    }
+}
+
+
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
