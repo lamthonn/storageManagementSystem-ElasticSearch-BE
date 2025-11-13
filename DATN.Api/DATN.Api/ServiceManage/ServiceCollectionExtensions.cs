@@ -12,6 +12,7 @@ using DATN.Application.NhatKyHeThong;
 using DATN.Application.ThuMuc;
 using DATN.Application.TaiLieu;
 using Nest;
+using DATN.Infrastructure.Data;
 
 namespace DATN.Api.ServiceManage
 {
@@ -23,6 +24,7 @@ namespace DATN.Api.ServiceManage
             services.AddTransient<Helper>();
             services.AddTransient<ElasticClient>();
             services.AddTransient<ElasticSearchService>();
+            services.AddTransient<DbContextInitial>();
             services.AddTransient<IAuthen, authen>();
             services.AddTransient<IAuthen, authen>();
             services.AddTransient<IDanhMucCapDo, DanhMucCapDoService>();
