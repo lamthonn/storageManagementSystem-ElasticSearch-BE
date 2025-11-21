@@ -11,10 +11,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Nest;
+using SharedKernel.Application.Utils;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
@@ -92,18 +94,40 @@ namespace DATN.Application.TaiLieu
                         await file.CopyToAsync(stream);
                     }
 
-                    // MÃ HÓA FILE VỪA LƯU THEO CẤP ĐỘ
-                    if(mucDoNum == 3) // tuyệt mật
+                    // MÃ HÓA FILE VỪA LƯU THEO CẤP ĐỘ (đặt quy trình mã hóa ở đây)
+                    string appCode = _config.GetSection("AppCode").Value ?? "";
+                    var vaultUrl = _config.GetSection("Uri")["vault"] + "";
+                    HybridEncryption.SetAppCode(appCode);
+                    HybridEncryption.SetVaultUrl(vaultUrl);
+
+                    // B1: tạo 1 cặp key ECC
+                    (byte[] PrivateKeyECC, byte[] PublicKeyECC) = HybridEncryption.GenerateECCKey();
+                    // B2: Lưu 2 key ECC vào vault
+                    // 2 key này lưu vào db (chỉ lưu phần khác. VD: đặt tên là ...{random})
+                    var guidKeyName = Guid.NewGuid().ToString();
+                    string pvKeyName = $"pvECC_key_{file.FileName}_{guidKeyName}";
+                    string pbKeyName = $"pbECC_key_{file.FileName}_{guidKeyName}";
+                    var res_pv = HybridEncryption.SetVaultSecretValue(appCode, pvKeyName, Convert.ToBase64String(PrivateKeyECC));
+                    var res_pb = HybridEncryption.SetVaultSecretValue(appCode, pbKeyName, Convert.ToBase64String(PublicKeyECC));
+                    // B3: tạo key AES + B4: mã hóa file bằng AES + B5: mã hóa AES key bằng ECC public key + B6: key AES sau khi mã hóa add vào file đã mã hóa + B7: lưu file đã mã hóa lên server + đổi định dạng file thành .Encrypt (ngăn mở file)
+                    var outputFile = HybridEncryption.EncryptFileToStoring(filePath, folderPath, pvKeyName, pbKeyName);
+                    // B4: xóa file gốc
+                    if (File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                        pathForDb = pathForDb + ".encrypt";
+                    }
+                    if (mucDoNum == 3) // tuyệt mật
                     {
 
                     }
                     else if (mucDoNum == 2) // tối mật
                     {
-
+                        // sử dụng mã hóa AES để mã hóa file + mã hóa key AES bằng ECC public key
                     }
                     else // mật
                     {
-
+                        // sử dụng hàm băm SHA256 để mã hóa file
                     }
 
                     //lấy plainText
@@ -112,6 +136,8 @@ namespace DATN.Application.TaiLieu
                     if(fileExt?.ToLower() == ".docx" || fileExt?.ToLower() == ".doc")
                     {
                         plainText = GetPlainTextDocx(file);
+                        // mã hóa plaintext
+                        plainText = await HybridEncryption.EncryptStringToStoring(plainText);
                     }
 
                     // add vào db
@@ -139,6 +165,7 @@ namespace DATN.Application.TaiLieu
                         nguoi_tao = currentUser,
                         ngay_chinh_sua = DateTime.Now,
                         nguoi_chinh_sua = currentUser,
+                        EccKeyName = guidKeyName,
                     };
                     dsNewDocs.Add(newFile);
 
@@ -779,6 +806,7 @@ namespace DATN.Application.TaiLieu
         }
         public async Task<DownloadResult> HandleDownloadTaiLieu(Guid idTaiLieu)
         {
+
             try
             {
                 //tài liệu
@@ -788,11 +816,26 @@ namespace DATN.Application.TaiLieu
                     throw new Exception("Không lấy được tài liệu.");
                 }
                 string rootPath = _config.GetSection("RootFileServer")["path"] ?? "";
+                string share = _config.GetSection("RootFileServer")["share"] ?? "";
                 var filePath = Path.Combine(rootPath, taiLieu.duong_dan);
+                var folderShare = Path.Combine(rootPath, share);
+                var encryptFile = Path.Combine(rootPath, taiLieu.duong_dan + ".encrypt");
 
                 if (!System.IO.File.Exists(filePath))
                 {
-                    throw new Exception("Không tìm thấy file.");
+                    string appCode = _config.GetSection("AppCode").Value ?? "";
+                    var vaultUrl = _config.GetSection("Uri")["vault"] + "";
+                    HybridEncryption.SetAppCode(appCode);
+                    HybridEncryption.SetVaultUrl(vaultUrl);
+
+                    string pvKeyName = $"pvECC_key_{taiLieu.ten}_{taiLieu.EccKeyName}";
+                    var receiverPrivateKey = await HybridEncryption.GetVaultSecretValue("NHCH", pvKeyName);
+                    var decrypt = HybridEncryption.DecryptFileToStoring(encryptFile, folderShare, receiverPrivateKey);
+                    filePath = encryptFile;
+                    if (!System.IO.File.Exists(filePath)) 
+                    {
+                        throw new Exception("File không tồn tại trên hệ thống.");
+                    }
                 }
 
                 var memory = new MemoryStream();
@@ -809,7 +852,7 @@ namespace DATN.Application.TaiLieu
                     detail = $"Tải xuống tài liệu ${taiLieu.ten}",
                     command = "PERM_DOWNLOAD",
                 });
-
+                await DeletePublicDocs();
                 return new DownloadResult
                 {
                     Stream = memory,
@@ -1349,14 +1392,13 @@ namespace DATN.Application.TaiLieu
                 string newFileName = $"{request.new_name}{extension}";
 
                 // Tạo đường dẫn mới
-                string newRelativePath = Path.Combine(directory, newFileName);
+                string newRelativePath = Path.Combine(directory, newFileName + ".encrypt");
                 string newFullPath = Path.Combine(rootPath, newRelativePath);
 
                 // Đảm bảo thư mục tồn tại
-                string fullDir = Path.GetDirectoryName(newFullPath)!;
-                if (!Directory.Exists(fullDir))
+                if (!Directory.Exists(Path.Combine(rootPath, directory)))
                 {
-                    Directory.CreateDirectory(fullDir);
+                    Directory.CreateDirectory(Path.Combine(rootPath, directory));
                 }
 
                 // Đổi tên file thật trên server (nếu tồn tại)
@@ -1366,11 +1408,18 @@ namespace DATN.Application.TaiLieu
                 }
                 else
                 {
-                    throw new Exception($"Không tìm thấy file tại: {oldFullPath}");
+                    if(File.Exists(oldFullPath + ".encrypt"))
+                    {
+                        File.Move(oldFullPath + ".encrypt", newFullPath, true);
+                    }
+                    else
+                    {
+                        throw new Exception($"Không tìm thấy file tại: {oldFullPath}");
+                    }
                 }
 
                 // Cập nhật DB
-                doc.ten = request.new_name;
+                doc.ten = request.new_name + extension;
                 doc.duong_dan = newRelativePath.Replace("\\", "/"); // dùng "/" để đồng nhất
 
                 _context.tai_lieu.Update(doc);
@@ -1411,11 +1460,17 @@ namespace DATN.Application.TaiLieu
 
                 // 3️⃣ Xác định đường dẫn thật trên server
                 string fullPath = Path.Combine(rootPath, doc.duong_dan);
+                string fullPathEncrypt = Path.Combine(rootPath, doc.duong_dan + ".encrypt");
 
                 // 4️⃣ Xóa file thật trên ổ đĩa (nếu có)
                 if (File.Exists(fullPath))
                 {
                     File.Delete(fullPath);
+                }
+                
+                if (File.Exists(fullPathEncrypt))
+                {
+                    File.Delete(fullPathEncrypt);
                 }
 
                 // 5️⃣ Xóa bản ghi trong database
@@ -1438,6 +1493,41 @@ namespace DATN.Application.TaiLieu
                 throw new Exception($"Lỗi khi xóa tài liệu: {ex.Message}");
             }
         }
+        
+        public async Task<string> DeletePublicDocs()
+        {
+            string rootPath = _config.GetSection("RootFileServer")["path"] ?? "";
+            string share = _config.GetSection("RootFileServer")["share"] ?? "";
+            
+            string folderShare = Path.Combine(rootPath, share);
+            if (!Directory.Exists(folderShare))
+            {
+                 return ("Thư mục chia sẻ không tồn tại trên server.");
+            }
+
+            try
+            {
+                // Lấy toàn bộ file trong folderShare và xóa hết
+                var files = Directory.GetFiles(folderShare);
+                foreach (var file in files)
+                {
+                    File.Delete(file);
+                }
+
+                //Nếu muốn xóa cả thư mục con:
+                var dirs = Directory.GetDirectories(folderShare);
+                foreach (var dir in dirs)
+                {
+                    Directory.Delete(dir, true);
+                }
+
+                return "Đã xóa tất cả file trong thư mục.";
+            }
+            catch (Exception ex)
+            {
+                return $"Lỗi khi xóa file: {ex.Message}";
+            }
+        }
 
         public async Task<string> DeleteManyDocs(List<Guid> ids)
         {
@@ -1455,12 +1545,25 @@ namespace DATN.Application.TaiLieu
                 foreach (var doc in docs)
                 {
                     string fullPath = Path.Combine(rootPath, doc.duong_dan);
+                    string fullPathEncrypt = Path.Combine(rootPath, doc.duong_dan + ".encrypt");
 
                     if (File.Exists(fullPath))
                     {
                         try
                         {
                             File.Delete(fullPath);
+                        }
+                        catch (Exception fileEx)
+                        {
+                            // Không dừng toàn bộ tiến trình, chỉ log lỗi file
+                            throw new Exception($"Không thể xóa file {fullPath}: {fileEx.Message}");
+                        }
+                    }
+                    if (File.Exists(fullPathEncrypt))
+                    {
+                        try
+                        {
+                            File.Delete(fullPathEncrypt);
                         }
                         catch (Exception fileEx)
                         {
@@ -1509,10 +1612,32 @@ namespace DATN.Application.TaiLieu
                 // 2️⃣ Đường dẫn file
                 string rootPath = _config.GetSection("RootFileServer")["path"] ?? "";
                 var filePath = Path.Combine(rootPath, taiLieu.duong_dan);
+                var filePathEncrypt = Path.Combine(rootPath, taiLieu.duong_dan + ".encrypt");
 
                 if (!System.IO.File.Exists(filePath))
                 {
-                    throw new Exception("Không tìm thấy file.");
+                    if (System.IO.File.Exists(filePathEncrypt))
+                    {
+                        filePath = filePathEncrypt;
+                    }
+                    else
+                    {
+                        throw new Exception("Không tìm thấy file.");
+                    }
+                }
+                // giải mã file nếu là file mã hóa
+                if (filePath.EndsWith(".encrypt"))
+                {
+                    string appCode = _config.GetSection("AppCode").Value ?? "";
+                    var vaultUrl = _config.GetSection("Uri")["vault"] + "";
+                    HybridEncryption.SetAppCode(appCode);
+                    HybridEncryption.SetVaultUrl(vaultUrl);
+                    string share = _config.GetSection("RootFileServer")["share"] ?? "";
+                    var folderShare = Path.Combine(rootPath, share);
+                    string pvKeyName = $"pvECC_key_{taiLieu.ten}_{taiLieu.EccKeyName}";
+                    var receiverPrivateKey = await HybridEncryption.GetVaultSecretValue("NHCH", pvKeyName);
+                    var decrypt = HybridEncryption.DecryptFileToStoring(filePath, folderShare, receiverPrivateKey);
+                    filePath = decrypt.Result.outputFile;
                 }
 
                 // 3️⃣ Đọc file vào memory stream
@@ -1533,6 +1658,7 @@ namespace DATN.Application.TaiLieu
                     detail = $"Xem trước tài liệu {taiLieu.ten}",
                     command = "PERM_PREVIEW",
                 });
+                await DeletePublicDocs();
 
                 // 6️⃣ Trả kết quả
                 return new DownloadResult

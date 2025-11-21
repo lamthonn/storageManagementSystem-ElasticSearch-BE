@@ -40,5 +40,9 @@ namespace DATN.Domain.Entities
         [ForeignKey(nameof(thu_muc_id))]
         public virtual thu_muc thu_muc { get; set; }
         #endregion
+
+        #region Cập nhật 18/11/2025
+        public string? EccKeyName { get; set; }
+        #endregion
     }
 }

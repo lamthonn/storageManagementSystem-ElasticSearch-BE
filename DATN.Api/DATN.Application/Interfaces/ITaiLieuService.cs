@@ -21,6 +21,7 @@ namespace DATN.Application.Interfaces
         Task<string> HandleShareFile(ShareFileParams request);
         Task<string> HandleChangeName(ChangenameParams request);
         Task<string> DeleteDocs(Guid id);
+        Task<string> DeletePublicDocs();
         Task<string> DeleteManyDocs(List<Guid> ids);
         Task<DownloadResult> GetDoc(Guid id);    
     }

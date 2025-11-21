@@ -193,5 +193,20 @@ namespace DATN.Api.Controllers
         }
         #endregion
 
+        #region api lấy file không trong thư mục
+        [HttpGet("delete-public-file")]
+        public async Task<string> DeletePublicDocs()
+        {
+            try
+            {
+                var result = await _taiLieuService.DeletePublicDocs();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        #endregion
     }
 }
