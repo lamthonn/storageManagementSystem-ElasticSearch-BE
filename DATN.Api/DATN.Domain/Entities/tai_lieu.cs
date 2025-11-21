@@ -44,5 +44,9 @@ namespace DATN.Domain.Entities
         #region Cập nhật 18/11/2025
         public string? EccKeyName { get; set; }
         #endregion
+
+        #region Cập nhật 21/11/2025
+        public string? htmlContent { get; set; } // chỉ dùng khi import file word
+        #endregion
     }
 }
