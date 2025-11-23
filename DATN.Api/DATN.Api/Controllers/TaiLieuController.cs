@@ -48,6 +48,22 @@ namespace DATN.Api.Controllers
             }
         }
         #endregion
+        
+        #region api giải mã string
+        [HttpPost("giai-ma")]
+        public async Task<string> DecryptContent([FromBody] string DecryptContent)
+        {
+            try
+            {
+                var result = await _taiLieuService.DecryptContent(DecryptContent);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        #endregion
 
         #region api lấy ds người dùng đã chia sẻ tài liệu với mình
         [HttpGet("get-nguoi-dung")]

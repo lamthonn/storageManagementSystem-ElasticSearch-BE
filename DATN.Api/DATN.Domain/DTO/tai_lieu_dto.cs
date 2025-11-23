@@ -25,6 +25,7 @@ namespace DATN.Domain.DTO
         public string? FileHash { get; set; } //(MD5/SHA256) → để kiểm tra trùng file.
         public string? Status { get; set; } // trạng thái: uploaded, indexed...
         public string? ContentText { get; set; }    // nội dung text trích xuất từ file
+        public string? htmlContent { get; set; }  
         public DateTime? IndexedAt { get; set; }  // (ngày giờ đã index lên Elastic).
         public string? IndexStatus { get; set; } // (chưa index / thành công / lỗi).
         public Guid? thu_muc_id { get; set; } // id của folder đang lưu trữ5420

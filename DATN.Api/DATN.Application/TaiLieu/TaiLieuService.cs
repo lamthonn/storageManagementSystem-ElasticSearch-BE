@@ -132,12 +132,50 @@ namespace DATN.Application.TaiLieu
 
                     //lấy plainText
                     string plainText = "";
+                    var (htmlCH, _dicImageByte_CH) = ("", new Dictionary<string, byte[]>());
                     var fileExt = Path.GetExtension(file.FileName)?.ToLower();
                     if(fileExt?.ToLower() == ".docx" || fileExt?.ToLower() == ".doc")
                     {
                         plainText = GetPlainTextDocx(file);
+                        // lấy html
+                        (htmlCH, _dicImageByte_CH) = handleXmlWord.handleReadXml(file.OpenReadStream());
+
+                        // lưu ảnh 
+                        var htmlDoc = new HtmlAgilityPack.HtmlDocument();
+                        htmlDoc.LoadHtml(htmlCH);
+                        var bodyNode = htmlDoc.DocumentNode;
+
+                        var imgNodes = bodyNode.SelectNodes("//img");
+                        var lstImg = new List<Dictionary<string, string>>();
+                        List<Dictionary<string, string>> imgDict = new List<Dictionary<string, string>>();
+
+                        foreach (var img in imgNodes)
+                        {
+                            var style = img.GetAttributeValue("style", "");
+                            var newStyle = style.TrimEnd(new char[] { ';', ' ' });
+
+                            if (string.IsNullOrEmpty(newStyle))
+                            {
+                                newStyle = "display:inline-flex";
+                            }
+                            else if (!newStyle.Contains("display:inline-flex"))
+                            {
+                                newStyle += ";display:inline-flex";
+                            }
+
+                            img.SetAttributeValue("style", newStyle);
+                            (var outerXml, lstImg) = handleXmlWord.CreateImgPath(img.OuterHtml, _config);
+                            imgDict.AddRange(lstImg);
+                            var newImgNode = HtmlAgilityPack.HtmlNode.CreateNode(outerXml);
+                            img.ParentNode.ReplaceChild(newImgNode, img);
+                        }
+                        htmlCH = htmlDoc.DocumentNode.OuterHtml;
+                        handleXmlWord.SaveImgToServer(imgDict, _config);
+
                         // mã hóa plaintext
                         plainText = await HybridEncryption.EncryptStringToStoring(plainText);
+                        // mã hóa HTML
+                        htmlCH = await HybridEncryption.EncryptStringToStoring(htmlCH);
                     }
 
                     // add vào db
@@ -166,6 +204,7 @@ namespace DATN.Application.TaiLieu
                         ngay_chinh_sua = DateTime.Now,
                         nguoi_chinh_sua = currentUser,
                         EccKeyName = guidKeyName,
+                        htmlContent = htmlCH
                     };
                     dsNewDocs.Add(newFile);
 
@@ -283,6 +322,7 @@ namespace DATN.Application.TaiLieu
                         nguoi_tao = x.nguoi_tao,
                         ngay_chinh_sua = x.ngay_chinh_sua,
                         nguoi_chinh_sua = x.nguoi_chinh_sua,
+                        htmlContent = x.htmlContent,
                     });
                     var result = await PaginatedList<tai_lieu_dto>.Create(datasDto, request.pageNumber, request.pageSize);
 
@@ -526,6 +566,7 @@ namespace DATN.Application.TaiLieu
                     loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
                     plain_text = x.ContentText,
                     extension = x.FileType,
+                    html_content = x.htmlContent
                 }).ToList());
 
                 //ds được chia sẻ với tôi
@@ -663,6 +704,7 @@ namespace DATN.Application.TaiLieu
                     loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
                     plain_text = x.ContentText,
                     extension = x.FileType,
+                    html_content = x.htmlContent
                 }).ToList());
 
                 // ds thư mục
@@ -1667,6 +1709,19 @@ namespace DATN.Application.TaiLieu
                     ContentType = contentType,
                     FileName = Path.GetFileName(filePath)
                 };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<string> DecryptContent(string content)
+        {
+            try
+            {
+                var newString = HybridEncryption.DecryptStringToStoring(content);
+                return newString.Result;
             }
             catch (Exception ex)
             {

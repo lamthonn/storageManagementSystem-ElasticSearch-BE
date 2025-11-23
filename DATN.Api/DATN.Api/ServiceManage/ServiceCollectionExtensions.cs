@@ -22,6 +22,7 @@ namespace DATN.Api.ServiceManage
         {
             // Đăng ký các service tại đây
             services.AddTransient<Helper>();
+            services.AddTransient<handleXmlWord>();
             services.AddTransient<ElasticClient>();
             services.AddTransient<ElasticSearchService>();
             services.AddTransient<DbContextInitial>();

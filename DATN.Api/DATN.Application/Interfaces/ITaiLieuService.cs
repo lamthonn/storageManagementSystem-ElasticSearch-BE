@@ -24,5 +24,6 @@ namespace DATN.Application.Interfaces
         Task<string> DeletePublicDocs();
         Task<string> DeleteManyDocs(List<Guid> ids);
         Task<DownloadResult> GetDoc(Guid id);    
+        Task<string> DecryptContent(string EncryptContent);    
     }
 }
