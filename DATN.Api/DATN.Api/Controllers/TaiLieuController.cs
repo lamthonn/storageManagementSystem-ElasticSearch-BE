@@ -2,9 +2,11 @@
 using DATN.Application.TaiLieu;
 using DATN.Application.Utils;
 using DATN.Domain.DTO;
+using DATN.Infrastructure.Data;
 using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Application.Utils;
 
 namespace DATN.Api.Controllers
 {
@@ -13,9 +15,13 @@ namespace DATN.Api.Controllers
     public class TaiLieuController : ControllerBase
     {
         private readonly ITaiLieuService _taiLieuService;
-        public TaiLieuController(ITaiLieuService taiLieuService)
+        private readonly AppDbContext _context;
+        private readonly IConfiguration _config;
+        public TaiLieuController(ITaiLieuService taiLieuService, IConfiguration config, AppDbContext context)
         {
             _taiLieuService = taiLieuService;
+            _config = config;
+            _context = context;
         }
 
         [HttpPost("upload")]
@@ -30,6 +36,52 @@ namespace DATN.Api.Controllers
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        [HttpGet("get-image")]
+        public async Task<IActionResult> GetImage([FromQuery] Guid id)
+        {
+            var taiLieu = _context.tai_lieu.FirstOrDefault(t => t.Id == id);
+            if(taiLieu == null)
+            {
+                return NotFound("File not found.");
+            }
+            if (string.IsNullOrWhiteSpace(taiLieu.duong_dan))
+                return BadRequest("filePath is required.");
+
+            // Ghép path đầy đủ nếu bạn lưu folder root trong config
+            string rootPath = _config["RootFileServer:path"];
+            string fullPath = Path.Combine(rootPath, taiLieu.duong_dan);
+            if (fullPath.Trim().EndsWith(".encrypt"))
+            {
+                string appCode = _config.GetSection("AppCode").Value ?? "";
+                var vaultUrl = _config.GetSection("Uri")["vault"] + "";
+                HybridEncryption.SetAppCode(appCode);
+                HybridEncryption.SetVaultUrl(vaultUrl);
+                string share = _config.GetSection("RootFileServer")["share"] ?? "";
+                var folderShare = Path.Combine(rootPath, share);
+                string pvKeyName = $"pvECC_key_{taiLieu.ten}_{taiLieu.EccKeyName}";
+                var receiverPrivateKey = await HybridEncryption.GetVaultSecretValue("NHCH", pvKeyName);
+                var decrypt = HybridEncryption.DecryptFileToStoring(fullPath, folderShare, receiverPrivateKey);
+
+                fullPath = decrypt.Result.outputFile.ToString();
+            }
+            if (!System.IO.File.Exists(fullPath))
+                return NotFound("File not found.");
+
+            var ext = Path.GetExtension(fullPath).ToLower();
+            string contentType = ext switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                ".bmp" => "image/bmp",
+                _ => "application/octet-stream"
+            };
+
+            var fileBytes = System.IO.File.ReadAllBytes(fullPath);
+            await _taiLieuService.DeletePublicDocs();
+            return File(fileBytes, contentType);
         }
 
 

@@ -119,15 +119,15 @@ namespace DATN.Application.TaiLieu
                     }
                     if (mucDoNum == 3) // tuyệt mật
                     {
-
+                        // mỗi file 1 cặp key ECC + mật khẩu
                     }
                     else if (mucDoNum == 2) // tối mật
                     {
-                        // sử dụng mã hóa AES để mã hóa file + mã hóa key AES bằng ECC public key
+                        // mỗi file 1 cặp key ECC
                     }
                     else // mật
                     {
-                        // sử dụng hàm băm SHA256 để mã hóa file
+                        // sử dụng key chung
                     }
 
                     //lấy plainText
@@ -878,6 +878,20 @@ namespace DATN.Application.TaiLieu
                     {
                         throw new Exception("File không tồn tại trên hệ thống.");
                     }
+                }
+
+                if (filePath.Trim().EndsWith(".encrypt"))
+                {
+                    string appCode = _config.GetSection("AppCode").Value ?? "";
+                    var vaultUrl = _config.GetSection("Uri")["vault"] + "";
+                    HybridEncryption.SetAppCode(appCode);
+                    HybridEncryption.SetVaultUrl(vaultUrl);
+
+                    string pvKeyName = $"pvECC_key_{taiLieu.ten}_{taiLieu.EccKeyName}";
+                    var receiverPrivateKey = await HybridEncryption.GetVaultSecretValue("NHCH", pvKeyName);
+                    var decrypt = HybridEncryption.DecryptFileToStoring(filePath, folderShare, receiverPrivateKey);
+
+                    filePath = decrypt.Result.outputFile.ToString();
                 }
 
                 var memory = new MemoryStream();
