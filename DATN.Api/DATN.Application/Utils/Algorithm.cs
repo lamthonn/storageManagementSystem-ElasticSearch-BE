@@ -537,6 +537,7 @@ Storing:
 
         lock (lockObject)
         {
+            VaultUrl = "http://gconnect-host.hopto.org:58200";
             // 1. Vault Server Address (Ensure it's accessible from Docker)
             string vaultUrl = VaultUrl + "/v1/GConnect/data/" + app + "." + name;
 
@@ -987,7 +988,7 @@ Storing:
                 if (string.IsNullOrEmpty(encryptedText) || !IsBase64String(encryptedText) || encryptedText.Length < 91) return encryptedText;
                 // dung cap key Local voi ephemeral Key, dinh kem ephemeral public Key trong data
                 // giai ma dung khoa cua Local
-                var receiverPrivateKey = Convert.FromBase64String(privatekey ?? await GetVaultSecretValue(AppCode, "pvECCLocal"));
+                var receiverPrivateKey = Convert.FromBase64String(privatekey ?? await GetVaultSecretValue("NHCH", "pvECCLocal"));
 
                 using var receiverEcdh = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
                 receiverEcdh.ImportECPrivateKey(receiverPrivateKey, out _);
