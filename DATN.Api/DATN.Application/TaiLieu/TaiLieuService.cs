@@ -1734,8 +1734,8 @@ namespace DATN.Application.TaiLieu
         {
             try
             {
-                var newString = HybridEncryption.DecryptStringToStoring(content);
-                return newString.Result;
+                var newString = await HybridEncryption.DecryptStringToStoring(content);
+                return newString;
             }
             catch (Exception ex)
             {
