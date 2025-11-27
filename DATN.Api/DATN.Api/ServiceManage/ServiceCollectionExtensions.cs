@@ -13,6 +13,7 @@ using DATN.Application.ThuMuc;
 using DATN.Application.TaiLieu;
 using Nest;
 using DATN.Infrastructure.Data;
+using DATN.Application.CauHinhFile;
 
 namespace DATN.Api.ServiceManage
 {
@@ -36,6 +37,7 @@ namespace DATN.Api.ServiceManage
             services.AddTransient<INhatKyHeThong, NhatKyHeThongService>();
             services.AddTransient<IThuMucService, ThuMucService>();
             services.AddTransient<ITaiLieuService, TaiLieuService>();
+            services.AddTransient<ICauHinhFile, CauhinhFileService>();
 
             return services;
         }

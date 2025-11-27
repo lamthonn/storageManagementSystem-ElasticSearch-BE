@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
     public DbSet<tai_lieu> tai_lieu { get; set; }
     public DbSet<thu_muc> thu_muc { get; set; }
     public DbSet<tai_lieu_2_nguoi_dung> tai_lieu_2_nguoi_dung { get; set; }
+    public DbSet<cau_hinh_file> cau_hinh_file { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

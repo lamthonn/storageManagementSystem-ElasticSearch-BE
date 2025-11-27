@@ -595,6 +595,8 @@ namespace DATN.Application.TaiLieu
 
                             if (request.keySearch != null)
                             {
+
+
                                 mustQueries.Add(q.Wildcard(w => w
                                      .Field(f => f.ten.Suffix("keyword"))
                                      .Value($"*{request.keySearch}*") // không ToLower()
