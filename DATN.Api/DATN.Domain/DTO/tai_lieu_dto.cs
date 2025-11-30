@@ -37,4 +37,28 @@ namespace DATN.Domain.DTO
         public string FileName { get; set; }
     }
 
+    public class TaiLieuElasticDto
+    {
+        public Guid Id { get; set; }
+        public string ma { get; set; }
+        public string ten { get; set; }
+        public int cap_do { get; set; }
+        public string phong_ban { get; set; }
+        public bool isPublic { get; set; }
+
+        // nội dung dùng cho full-text search
+        public string? ContentText { get; set; }
+        public List<string> encryptedTokens { get; set; }   // Blind index
+
+        // metadata
+        public string? FileType { get; set; }
+        public long FileSize { get; set; }
+        public Guid? thu_muc_id { get; set; } // id của folder đang lưu trữ5420
+        public DateTime? IndexedAt { get; set; }
+        public DateTime? ngay_tao { get; set; }
+        public string? nguoi_tao { get; set; }
+        public DateTime? ngay_chinh_sua { get; set; }
+        public string? nguoi_chinh_sua { get; set; }
+    }
+
 }

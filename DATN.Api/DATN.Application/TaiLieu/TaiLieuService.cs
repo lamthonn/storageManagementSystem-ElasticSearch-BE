@@ -76,6 +76,8 @@ namespace DATN.Application.TaiLieu
                 }
 
                 List<tai_lieu> dsNewDocs = new List<tai_lieu>();
+                var dicsDoc = new Dictionary<string, string>();
+
                 foreach (var file in request.files)
                 {
                     // hash file + check trùng
@@ -132,6 +134,7 @@ namespace DATN.Application.TaiLieu
 
                     //lấy plainText
                     string plainText = "";
+                    string cypher_text = "";
                     var (htmlCH, _dicImageByte_CH) = ("", new Dictionary<string, byte[]>());
                     var fileExt = Path.GetExtension(file.FileName)?.ToLower();
                     if(fileExt?.ToLower() == ".docx" || fileExt?.ToLower() == ".doc")
@@ -148,32 +151,35 @@ namespace DATN.Application.TaiLieu
                         var imgNodes = bodyNode.SelectNodes("//img");
                         var lstImg = new List<Dictionary<string, string>>();
                         List<Dictionary<string, string>> imgDict = new List<Dictionary<string, string>>();
-
-                        foreach (var img in imgNodes)
+                        if(imgNodes != null)
                         {
-                            var style = img.GetAttributeValue("style", "");
-                            var newStyle = style.TrimEnd(new char[] { ';', ' ' });
-
-                            if (string.IsNullOrEmpty(newStyle))
+                            foreach (var img in imgNodes)
                             {
-                                newStyle = "display:inline-flex";
-                            }
-                            else if (!newStyle.Contains("display:inline-flex"))
-                            {
-                                newStyle += ";display:inline-flex";
-                            }
+                                var style = img.GetAttributeValue("style", "");
+                                var newStyle = style.TrimEnd(new char[] { ';', ' ' });
 
-                            img.SetAttributeValue("style", newStyle);
-                            (var outerXml, lstImg) = handleXmlWord.CreateImgPath(img.OuterHtml, _config);
-                            imgDict.AddRange(lstImg);
-                            var newImgNode = HtmlAgilityPack.HtmlNode.CreateNode(outerXml);
-                            img.ParentNode.ReplaceChild(newImgNode, img);
+                                if (string.IsNullOrEmpty(newStyle))
+                                {
+                                    newStyle = "display:inline-flex";
+                                }
+                                else if (!newStyle.Contains("display:inline-flex"))
+                                {
+                                    newStyle += ";display:inline-flex";
+                                }
+
+                                img.SetAttributeValue("style", newStyle);
+                                (var outerXml, lstImg) = handleXmlWord.CreateImgPath(img.OuterHtml, _config);
+                                imgDict.AddRange(lstImg);
+                                var newImgNode = HtmlAgilityPack.HtmlNode.CreateNode(outerXml);
+                                img.ParentNode.ReplaceChild(newImgNode, img);
+                            }
+                            htmlCH = htmlDoc.DocumentNode.OuterHtml;
+                            handleXmlWord.SaveImgToServer(imgDict, _config);
                         }
-                        htmlCH = htmlDoc.DocumentNode.OuterHtml;
-                        handleXmlWord.SaveImgToServer(imgDict, _config);
 
                         // mã hóa plaintext
-                        plainText = await HybridEncryption.EncryptStringToStoring(plainText);
+                        cypher_text = await HybridEncryption.EncryptStringToStoring(plainText);
+                        dicsDoc.Add(file.FileName ?? "", plainText);
                         // mã hóa HTML
                         htmlCH = await HybridEncryption.EncryptStringToStoring(htmlCH);
                     }
@@ -195,7 +201,7 @@ namespace DATN.Application.TaiLieu
                         FileSize = file.Length,
                         FileHash = fileHash, // cần tính toán hash của file
                         Status = "uploaded",
-                        ContentText = plainText ?? "", // cần trích xuất text từ file
+                        ContentText = cypher_text ?? "", // cần trích xuất text từ file
                         IndexedAt = null,
                         IndexStatus = null,
                         thu_muc_id = request.thu_muc_id ?? null,
@@ -215,10 +221,10 @@ namespace DATN.Application.TaiLieu
                     _context.tai_lieu.AddRange(dsNewDocs);
                     await _context.SaveChangesAsync(new CancellationToken());
 
-                    var client = new ElasticClient();
                     foreach (var doc in dsNewDocs)
                     {
-                        var response = await _elastic.UpsertTaiLieuAsync(doc);
+                        var plaintext = dicsDoc.FirstOrDefault(x => x.Key == doc.ten).Value;
+                        var response = await _elastic.UpsertTaiLieuAsync(doc, plaintext);
 
                         if (response.IsValid)
                         {
@@ -434,6 +440,9 @@ namespace DATN.Application.TaiLieu
         {
             try
             {
+                var ElasticSearchUrl = _config.GetSection("ElasticSearchUrl")["path"] ?? "http://localhost:9200";
+                string blindKey = _config["Security:BlindIndexKey"] ?? "";
+
                 var result = new List<ResultSearch>();
                 var currentUser = _context.nguoi_dung.FirstOrDefault(x => x.Id == request.current_user_id);
                 if(currentUser == null)
@@ -442,7 +451,7 @@ namespace DATN.Application.TaiLieu
                 }
 
                 // ds tài liệu
-                var dsTaiLieu = await _client.SearchAsync<tai_lieu>(s => s
+                var dsTaiLieu = await _client.SearchAsync<TaiLieuElasticDto>(s => s
                     .Index("tai_lieu")
                     .Query(q =>
                         q.Bool(b =>
@@ -456,14 +465,26 @@ namespace DATN.Application.TaiLieu
                                 if (request.keySearch != null)
                                 {
                                     mustQueries.Add(q.Wildcard(w => w
-                                         .Field(f => f.ten.Suffix("keyword"))
-                                         .Value($"*{request.keySearch}*") // không ToLower()
-                                         .CaseInsensitive(true) // giữ nếu ES >= 7.10
-                                     ));
-                                    mustQueries.Add(q.Match(m => m
-                                        .Field(f => f.ContentText)
-                                        .Query(request.keySearch)
+                                       .Field(f => f.ten)
+                                       .Value($"*{request.keySearch}*")
                                     ));
+                                    // fulltext search
+                                    // 1. Tokenize query
+                                    var tokens = ElasticSearchService.AnalyzeText(request.keySearch, ElasticSearchUrl);
+
+                                    // 2. Hash token bằng BlindIndexKey
+                                    var hashedTokens = tokens
+                                        .Select(t => ElasticSearchService.HashToken(blindKey, t))
+                                        .ToList();
+
+                                    if (hashedTokens.Count > 0)
+                                    {
+                                        // 3. Query vào trường EncryptedTokens
+                                        mustQueries.Add(q.Terms(t => t
+                                            .Field(f => f.encryptedTokens)   // trường lưu blind index
+                                            .Terms(hashedTokens)
+                                        ));
+                                    }
                                 }
 
                                 if(request.loai_tai_lieu != null)
@@ -479,7 +500,7 @@ namespace DATN.Application.TaiLieu
                                         {
                                             mustQueries.Add(q.Terms(t => t
                                                 .Field(f => f.FileType.Suffix("keyword"))
-                                                .Terms(extensions)
+                                                .Terms(extensions.Select(e => e.ToLower()))
                                             ));
                                         }
                                     }
@@ -513,10 +534,29 @@ namespace DATN.Application.TaiLieu
 
                                 if (request.keyWord != null)
                                 {
-                                    mustQueries.Add(q.Match(m => m
-                                        .Field(f => f.ContentText)
-                                        .Query(request.keyWord)
-                                    ));
+                                    //mustQueries.Add(q.Match(m => m
+                                    //    .Field(f => f.ContentText)
+                                    //    .Query(request.keyWord)
+                                    //));
+                                    var tokens = ElasticSearchService.AnalyzeText(request.keyWord, ElasticSearchUrl);
+
+                                    // 2. Hash token bằng BlindIndexKey
+                                    var hashedTokens = tokens
+                                        .Select(t => ElasticSearchService.HashToken(blindKey, t))
+                                        .ToList();
+
+                                    if (hashedTokens.Count > 0)
+                                    {
+                                        // 3. Query vào trường EncryptedTokens
+                                        mustQueries.Add(q.Terms(t => t
+                                            .Field("encryptedTokens")   // trường lưu blind index
+                                            .Terms(hashedTokens)
+                                        ));
+                                    }
+                                    else
+                                    {
+                                        mustQueries.Add(q.Term(t => t.Field(f => f.Id.Suffix("keyword")).Value("___no_result___")));
+                                    }
                                 }
 
                                 if (request.ten_muc != null)
@@ -552,8 +592,6 @@ namespace DATN.Application.TaiLieu
                         )
                     )
                 );
-
-
                 result.AddRange(dsTaiLieu.Documents.Select(x => new ResultSearch
                 {
                     id = x.Id,
@@ -566,12 +604,11 @@ namespace DATN.Application.TaiLieu
                     loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
                     plain_text = x.ContentText,
                     extension = x.FileType,
-                    html_content = x.htmlContent
                 }).ToList());
 
                 //ds được chia sẻ với tôi
                 var shareDocs = _context.tai_lieu_2_nguoi_dung.Where(x => x.nguoi_dung_id == currentUser.Id).Select(x => x.tai_lieu_id);
-                var dsTaiLieuShare = await _client.SearchAsync<tai_lieu>(s => s
+                var dsTaiLieuShare = await _client.SearchAsync<TaiLieuElasticDto>(s => s
                     .Index("tai_lieu")
                     .Query(q =>
                         q.Bool(b =>
@@ -706,11 +743,10 @@ namespace DATN.Application.TaiLieu
                     loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
                     plain_text = x.ContentText,
                     extension = x.FileType,
-                    html_content = x.htmlContent
                 }).ToList());
 
                 // ds thư mục
-                var dsThuMuc = await _client.SearchAsync<thu_muc>(s => s
+                var dsThuMuc = await _client.SearchAsync<ThuMucElasticDto>(s => s
                     .Index("thu_muc")
                     .Query(q =>
                         q.Bool(b =>
@@ -828,8 +864,6 @@ namespace DATN.Application.TaiLieu
                 throw new Exception(ex.Message);
             }
         }
-
-        //HÀM GET FILE TYPE
         private string GetContentType(string path)
         {
             var types = new Dictionary<string, string>
@@ -943,7 +977,7 @@ namespace DATN.Application.TaiLieu
                 }
 
                 // ds tài liệu
-                var dsTaiLieu = await _client.SearchAsync<tai_lieu>(s => s
+                var dsTaiLieu = await _client.SearchAsync<TaiLieuElasticDto>(s => s
                     .Index("tai_lieu")
                     .Query(q =>
                         q.Bool(b =>
@@ -1069,7 +1103,7 @@ namespace DATN.Application.TaiLieu
 
                 //ds được chia sẻ với tôi
                 var shareDocs = _context.tai_lieu_2_nguoi_dung.Where(x => x.nguoi_dung_id == currentUser.Id).Select(x => x.tai_lieu_id);
-                var dsTaiLieuShare = await _client.SearchAsync<tai_lieu>(s => s
+                var dsTaiLieuShare = await _client.SearchAsync<TaiLieuElasticDto>(s => s
                     .Index("tai_lieu")
                     .Query(q =>
                         q.Bool(b =>
@@ -1208,7 +1242,7 @@ namespace DATN.Application.TaiLieu
                 }).ToList());
 
                 // ds thư mục
-                var dsThuMuc = await _client.SearchAsync<thu_muc>(s => s
+                var dsThuMuc = await _client.SearchAsync<ThuMucElasticDto>(s => s
                     .Index("thu_muc")
                     .Query(q =>
                         q.Bool(b =>

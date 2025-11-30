@@ -1,9 +1,13 @@
-﻿using DATN.Domain.Entities;
+﻿using DATN.Domain.DTO;
+using DATN.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Nest;
+using SharedKernel.Application.Utils;
+using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -54,10 +58,98 @@ namespace DATN.Application.Utils
 
 
         //update (nếu đã tồn tại):
-        public async Task<IndexResponse> UpsertTaiLieuAsync(tai_lieu tl)
+        public async Task<IndexResponse> UpsertTaiLieuAsync(tai_lieu tl, string contentText)
         {
-            var response = await _client.IndexAsync(tl, i => i.Id(tl.Id).Index("tai_lieu"));
+            var dto = await ToElastic(tl, contentText);
+
+            var response = await _client.IndexAsync(dto, i =>
+                i.Id(dto.Id).Index("tai_lieu")
+            );
             return response;
+        }
+
+        public async Task<TaiLieuElasticDto> ToElastic(tai_lieu tl, string plainContent)
+        {
+            // (1) Mã hóa nội dung bằng AES
+            string cipher = await HybridEncryption.EncryptStringToStoring(plainContent);
+            var ESUrl = _config.GetSection("ElasticSearchUrl")["path"] ?? "http://localhost:9200";
+            // (2) Tokenize plaintext
+            var tokens = await AnalyzeTextAsync(plainContent, ESUrl);
+
+            // (3) Tạo blind index bằng HMAC
+            string blindKey = _config["Security:BlindIndexKey"] ?? ""; // cấu hình trong appsettings
+            var encryptedTokens = tokens
+                .Select(t => HashToken(blindKey, t))
+                .ToList();
+
+            return new TaiLieuElasticDto
+            {
+                Id = tl.Id,
+                ma = tl.ma,
+                ten = tl.ten,
+                cap_do = tl.cap_do,
+                phong_ban = tl.phong_ban,
+                isPublic = tl.isPublic,
+                FileType = tl.FileType,
+                FileSize = tl.FileSize,
+                IndexedAt = DateTime.UtcNow,
+                ngay_tao = tl.ngay_tao,
+                nguoi_tao = tl.nguoi_tao,
+                ngay_chinh_sua = tl.ngay_chinh_sua,
+                nguoi_chinh_sua = tl.nguoi_chinh_sua,
+                thu_muc_id = tl.thu_muc_id,
+
+                ContentText = tl.ContentText,
+                encryptedTokens= encryptedTokens
+            };
+        }
+        //2. Hàm HMAC blind index
+        public static string HashToken(string key, string token)
+        {
+            var keyBytes = Encoding.UTF8.GetBytes(key);
+            using var hmac = new HMACSHA256(keyBytes);
+            var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(token));
+            return Convert.ToHexString(hash); // dạng hex
+        }
+        // Hàm gọi ES để tokenize plaintext
+        public static async Task<List<string>> AnalyzeTextAsync(string text, string ElasticSearchUrl)
+        {
+            var elasticUrl = ElasticSearchUrl ?? "http://localhost:9200";
+            var settings = new ConnectionSettings(new Uri(elasticUrl))
+                .DefaultIndex("tai_lieu");
+
+            var client = new ElasticClient(settings);
+            var analyze = await client.Indices.AnalyzeAsync(a => a
+                .Index("tai_lieu")
+                .Analyzer("vi_analyzer")   // Analyzer bạn đã tạo
+                .Text(text)
+            );
+
+            return analyze.Tokens
+                          .Select(t => t.Token.ToLower().Trim())
+                          .Where(t => t.Length > 1)
+                          .Distinct()
+                          .ToList();
+        }
+
+        public static List<string> AnalyzeText(string text, string ElasticSearchUrl)
+        {
+            var elasticUrl = ElasticSearchUrl ?? "http://localhost:9200";
+            var settings = new ConnectionSettings(new Uri(elasticUrl))
+                .DefaultIndex("tai_lieu");
+
+            var client = new ElasticClient(settings);
+            var analyze = client.Indices.Analyze(a => a
+                .Index("tai_lieu")
+                .Analyzer("vi_analyzer")   // Analyzer bạn đã tạo
+                .Text(text)
+            );
+
+            return analyze.Tokens
+                          .Select(t => t.Token.ToLower().Trim())
+                          .Where(t => t.Length > 1)
+                          .Distinct()
+                          .ToList();
         }
 
         //Tìm kiếm tài liệu (Full Text Search)
@@ -79,5 +171,8 @@ namespace DATN.Application.Utils
 
             return response.Documents.ToList();
         }
+
+        
+
     }
 }
