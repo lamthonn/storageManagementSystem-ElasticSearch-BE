@@ -15,6 +15,7 @@ namespace DATN.Domain.Entities
         public Guid id { get; set; }
         public string ten { get; set; }
         public Guid? thu_muc_cha_id { get; set; }
+        public string phong_ban { get; set; }
         public Guid nguoi_dung_id { get; set; }
         [ForeignKey(nameof(nguoi_dung_id))]
         public virtual nguoi_dung Nguoi_dung { get; set; }

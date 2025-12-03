@@ -82,7 +82,7 @@ namespace DATN.Application.TaiLieu
                 {
                     // hash file + check trùng
                     var fileHash = Helper.ComputeFileHash(file);
-                    var existingFile = _context.tai_lieu.FirstOrDefault(x => x.FileHash == fileHash);
+                    var existingFile = _context.tai_lieu.FirstOrDefault(x => x.FileHash == fileHash && x.nguoi_tao == currentUser);
                     if (existingFile != null)
                     {
                         throw new Exception($"File {file.FileName} đã tồn tại trên hệ thống.");
@@ -291,12 +291,32 @@ namespace DATN.Application.TaiLieu
             {
                 var currentUser = _helper.GetUserInfo().userName ?? "anonymous";
                 var userInfor = _context.nguoi_dung.FirstOrDefault(x => x.tai_khoan == currentUser);
+                var userGroupId = _context.nguoi_dung_2_nhom_nguoi_dung.FirstOrDefault(x => x.nguoi_dung_id == (userInfor != null ? userInfor.Id : Guid.Empty) && x.mac_dinh == true);
+                // nhóm người dùng của người dùng hiện tại
+                var userGroup = userGroupId != null ? _context.nhom_nguoi_dung.FirstOrDefault(x => x.Id == userGroupId.nhom_nguoi_dung_id) : null;
+
+                // phòng ban phụ trách của người dùng hiện tại
+                var phongBans = userInfor != null ? _context.nguoi_dung_2_danh_muc.Where(x => x.nguoi_dung_id == userInfor.Id).Select(x => x.danh_muc_id) : null;
+                var dmPhongBanInfor = phongBans != null ? _context.danh_muc.Where(x => phongBans.Contains(x.Id)) : null;
 
                 //tài liệu chia sẻ với tôi
                 var ShareData = _context.tai_lieu_2_nguoi_dung.Where(x => x.nguoi_dung_id == userInfor!.Id).Select(x => x.tai_lieu_id);
                 // tài liêu của tôi + tài liệu được chia sẻ
-                var datas = _context.tai_lieu.Where(x => (x.nguoi_tao == currentUser || ShareData.Contains(x.Id)) && x.thu_muc_id == null).AsNoTracking();
-                
+                var allData = _context.tai_lieu.Where(x => dmPhongBanInfor != null ? dmPhongBanInfor.Select(a => a.ma).Contains(x.phong_ban) : false); // lấy all tài liệu theo phòng ban
+                IQueryable<tai_lieu> datas = Enumerable.Empty<tai_lieu>().AsQueryable();
+
+                if (userGroup != null && allData != null)
+                {
+                    if (userGroup.cap_do == 1 || userGroup.cap_do == 2)
+                    {
+                        datas = allData;
+                    }
+                    else if (userGroup.cap_do == 3)
+                    {
+                        datas = _context.tai_lieu.Where(x => (x.nguoi_tao == currentUser || ShareData.Contains(x.Id)) && x.thu_muc_id == null);
+                    }
+                }
+
                 if (datas != null && datas.Count() > 0)
                 {
                     //QUERY -- QUERY -- QUERY
@@ -449,7 +469,15 @@ namespace DATN.Application.TaiLieu
                 {
                     throw new Exception("Không tìm thấy người dùng.");
                 }
+                var userInfor = _context.nguoi_dung.FirstOrDefault(x => x.tai_khoan == currentUser.tai_khoan);
+                var userGroupId = _context.nguoi_dung_2_nhom_nguoi_dung.FirstOrDefault(x => x.nguoi_dung_id == (userInfor != null ? userInfor.Id : Guid.Empty) && x.mac_dinh == true);
+                // nhóm người dùng của người dùng hiện tại
+                var userGroup = userGroupId != null ? _context.nhom_nguoi_dung.FirstOrDefault(x => x.Id == userGroupId.nhom_nguoi_dung_id) : null;
 
+                // phòng ban phụ trách của người dùng hiện tại
+                var phongBans = userInfor != null ? _context.nguoi_dung_2_danh_muc.Where(x => x.nguoi_dung_id == userInfor.Id).Select(x => x.danh_muc_id) : null;
+                var dmPhongBanInfor = phongBans != null ? _context.danh_muc.Where(x => phongBans.Contains(x.Id)) : null;
+                var phongBanList = dmPhongBanInfor?.Select(a => a.ma).Where(ma => !string.IsNullOrEmpty(ma)).ToList();
                 // ds tài liệu
                 var dsTaiLieu = await _client.SearchAsync<TaiLieuElasticDto>(s => s
                     .Index("tai_lieu")
@@ -459,7 +487,27 @@ namespace DATN.Application.TaiLieu
                                 var mustQueries = new List<QueryContainer>();
                                 var mustNotQueries = new List<QueryContainer>();
                                 
-                                mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                if(userGroup != null && userGroup.cap_do == 3)
+                                {
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                                }
+                                else
+                                {
+                                    if (phongBanList != null && phongBanList.Any())
+                                    {
+                                        mustQueries.Add(
+                                            new TermsQuery
+                                            {
+                                                Field = "phong_ban",
+                                                Terms = phongBanList
+                                            }
+                                        );
+                                    }
+                                    else
+                                    {
+                                        mustQueries.Add(new MatchNoneQuery());
+                                    }
+                                }
                                 mustNotQueries.Add(q.Exists(e => e.Field(f => f.thu_muc_id.Suffix("keyword"))));
 
                                 if (request.keySearch != null)
@@ -489,7 +537,7 @@ namespace DATN.Application.TaiLieu
 
                                 if(request.loai_tai_lieu != null)
                                 {
-                                    if(request.loai_tai_lieu == 5)//thư mục
+                                    if (request.loai_tai_lieu == 5)//thư mục
                                     {
                                         mustQueries.Add(q.Term(t => t.Field(f => f.Id.Suffix("keyword")).Value("___no_result___")));
                                     }
@@ -499,7 +547,7 @@ namespace DATN.Application.TaiLieu
                                         if (extensions.Length > 0)
                                         {
                                             mustQueries.Add(q.Terms(t => t
-                                                .Field(f => f.FileType.Suffix("keyword"))
+                                                .Field(f => f.FileType)
                                                 .Terms(extensions.Select(e => e.ToLower()))
                                             ));
                                         }
@@ -754,8 +802,30 @@ namespace DATN.Application.TaiLieu
                             var mustQueries = new List<QueryContainer>();
                             var mustNotQueries = new List<QueryContainer>();
 
-                            mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan.ToString())));
+                            if (userGroup != null && userGroup.cap_do == 3)
+                            {
+                                //mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan.ToString())));
+                                mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                            }
+                            else
+                            {
+                                if (phongBanList != null && phongBanList.Any())
+                                {
+                                    mustQueries.Add(
+                                        new TermsQuery
+                                        {
+                                            Field = "phong_ban.keyword",
+                                            Terms = phongBanList
+                                        }
+                                    );
+                                }
+                                else
+                                {
+                                    mustQueries.Add(new MatchNoneQuery());
+                                }
+                            }
                             mustNotQueries.Add(q.Exists(e => e.Field(f => f.thu_muc_cha_id.Suffix("keyword"))));
+                            
                             if (request.keySearch != null)
                             {
                                 mustQueries.Add(q.Wildcard(w => w
@@ -975,6 +1045,15 @@ namespace DATN.Application.TaiLieu
                 {
                     throw new Exception("Không tìm thấy người dùng.");
                 }
+                var userInfor = _context.nguoi_dung.FirstOrDefault(x => x.tai_khoan == currentUser.tai_khoan);
+                var userGroupId = _context.nguoi_dung_2_nhom_nguoi_dung.FirstOrDefault(x => x.nguoi_dung_id == (userInfor != null ? userInfor.Id : Guid.Empty) && x.mac_dinh == true);
+                // nhóm người dùng của người dùng hiện tại
+                var userGroup = userGroupId != null ? _context.nhom_nguoi_dung.FirstOrDefault(x => x.Id == userGroupId.nhom_nguoi_dung_id) : null;
+
+                // phòng ban phụ trách của người dùng hiện tại
+                var phongBans = userInfor != null ? _context.nguoi_dung_2_danh_muc.Where(x => x.nguoi_dung_id == userInfor.Id).Select(x => x.danh_muc_id) : null;
+                var dmPhongBanInfor = phongBans != null ? _context.danh_muc.Where(x => phongBans.Contains(x.Id)) : null;
+                var phongBanList = dmPhongBanInfor?.Select(a => a.ma).Where(ma => !string.IsNullOrEmpty(ma)).ToList();
 
                 // ds tài liệu
                 var dsTaiLieu = await _client.SearchAsync<TaiLieuElasticDto>(s => s
@@ -985,7 +1064,27 @@ namespace DATN.Application.TaiLieu
                             var mustQueries = new List<QueryContainer>();
                             var mustNotQueries = new List<QueryContainer>();
 
-                            mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                            if (userGroup != null && userGroup.cap_do == 3)
+                            {
+                                mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                            }
+                            else
+                            {
+                                if (phongBanList != null && phongBanList.Any())
+                                {
+                                    mustQueries.Add(
+                                        new TermsQuery
+                                        {
+                                            Field = "phong_ban",
+                                            Terms = phongBanList
+                                        }
+                                    );
+                                }
+                                else
+                                {
+                                    mustQueries.Add(new MatchNoneQuery());
+                                }
+                            }
                             mustQueries.Add(q.Term(t => t.Field(f => f.thu_muc_id.Suffix("keyword")).Value(request.thu_muc_id)));
 
                             if (request.keySearch != null)
@@ -1250,7 +1349,28 @@ namespace DATN.Application.TaiLieu
                             var mustQueries = new List<QueryContainer>();
                             var mustNotQueries = new List<QueryContainer>();
 
-                            mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan.ToString())));
+                            if (userGroup != null && userGroup.cap_do == 3)
+                            {
+                                //mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan.ToString())));
+                                mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
+                            }
+                            else
+                            {
+                                if (phongBanList != null && phongBanList.Any())
+                                {
+                                    mustQueries.Add(
+                                        new TermsQuery
+                                        {
+                                            Field = "phong_ban.keyword",
+                                            Terms = phongBanList
+                                        }
+                                    );
+                                }
+                                else
+                                {
+                                    mustQueries.Add(new MatchNoneQuery());
+                                }
+                            }
                             mustQueries.Add(q.Term(t => t.Field(f => f.thu_muc_cha_id.Suffix("keyword")).Value(request.thu_muc_id)));
                             if (request.keySearch != null)
                             {

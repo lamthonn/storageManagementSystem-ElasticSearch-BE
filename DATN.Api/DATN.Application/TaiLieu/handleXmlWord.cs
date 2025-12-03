@@ -805,7 +805,7 @@ namespace DATN.Application.TaiLieu
                         if (ele is DocumentFormat.OpenXml.Wordprocessing.TabChar)
                         {
                             //sbHTML.Append("   "); // hoặc "    "
-                            sbHTML.Append("[tabchar]");
+                            sbHTML.Append("\t");
                         }
                         else if (ele is DocumentFormat.OpenXml.Wordprocessing.Break)
                         {

@@ -42,7 +42,9 @@ namespace DATN.Application.ThuMuc
         {
             try
             {
-                var curUser = _helper.GetUserInfo().userName ?? "anonymous";    
+                var curUser = _helper.GetUserInfo().userName ?? "anonymous";
+                var phongbanInfor = _context.danh_muc.FirstOrDefault(x => x.Id == request.phong_ban_id);
+
                 var newTM = new thu_muc
                 {
                     id = Guid.NewGuid(),
@@ -51,6 +53,7 @@ namespace DATN.Application.ThuMuc
                     nguoi_dung_id = request.nguoi_dung_id ?? Guid.Empty,
                     ngay_tao = DateTime.Now,
                     nguoi_tao = curUser,
+                    phong_ban = phongbanInfor != null ? phongbanInfor.ma : "",
                 };
 
                 // đánh index cho thư mục
@@ -151,7 +154,20 @@ namespace DATN.Application.ThuMuc
         {
             try
             {
-                var dsThuMuc =_context.thu_muc.Where(x=> x.nguoi_dung_id == nguoi_dung_id && x.thu_muc_cha_id == null);
+                var userInfor = _context.nguoi_dung.FirstOrDefault(x => x.Id == nguoi_dung_id);
+                var userGroupId = _context.nguoi_dung_2_nhom_nguoi_dung.FirstOrDefault(x => x.nguoi_dung_id == nguoi_dung_id && x.mac_dinh == true);
+                // nhóm người dùng của người dùng hiện tại
+                var userGroup = userGroupId != null ? _context.nhom_nguoi_dung.FirstOrDefault(x => x.Id == userGroupId.nhom_nguoi_dung_id) : null;
+
+                // phòng ban phụ trách của người dùng hiện tại
+                var phongBans = userInfor != null ? _context.nguoi_dung_2_danh_muc.Where(x => x.nguoi_dung_id == userInfor.Id).Select(x => x.danh_muc_id) : null;
+                var dmPhongBanInfor = phongBans != null ? _context.danh_muc.Where(x => phongBans.Contains(x.Id)) : null;
+
+                var dsThuMuc = _context.thu_muc.Where(x => dmPhongBanInfor != null ? dmPhongBanInfor.Select(a => a.ma).Contains(x.phong_ban) : false && x.thu_muc_cha_id == null).AsNoTracking();
+                if(userGroup != null && userGroup.cap_do == 3)
+                {
+                    dsThuMuc = dsThuMuc.Where(x=> x.nguoi_dung_id == nguoi_dung_id && x.thu_muc_cha_id == null);
+                }
                 var result = dsThuMuc.Select(x => new thu_muc_dto
                 {
                     id = x.id,
