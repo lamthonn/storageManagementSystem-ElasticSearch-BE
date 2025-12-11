@@ -5,6 +5,7 @@ using DATN.Domain.Entities;
 using DATN.Infrastructure.Data;
 using DocumentFormat.OpenXml.Office2016.Excel;
 using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -60,7 +61,7 @@ namespace DATN.Application.TaiLieu
                 string ElasticSearchUrl = _config.GetSection("ElasticSearchUrl")["path"] ?? "";
                 string secret = _config.GetSection("RootFileServer")["secret"] ?? "";
                 var currentUser = _helper.GetUserInfo().userName;
-                if(currentUser == null)
+                if (currentUser == null)
                 {
                     throw new Exception("Không lấy được thông tin người dùng.");
                 }
@@ -68,7 +69,7 @@ namespace DATN.Application.TaiLieu
                 var userInfor = _context.nguoi_dung.FirstOrDefault(x => x.tai_khoan == currentUser);
                 var folderPath = Path.Combine(rootPath, currentUser, secret);
                 var mucDo = _context.danh_muc.FirstOrDefault(x => x.Id == request.cap_do_id);
-                var mucDoNum = mucDo?.ma == "tuyet-mat" ? 3 : (mucDo?.ma == "toi-mat" ? 2 : 1) ;
+                var mucDoNum = mucDo?.ma == "tuyet-mat" ? 3 : (mucDo?.ma == "toi-mat" ? 2 : 1);
                 // chưa có thư mục thì tạo mới
                 if (!Directory.Exists(folderPath))
                 {
@@ -102,34 +103,48 @@ namespace DATN.Application.TaiLieu
                     HybridEncryption.SetAppCode(appCode);
                     HybridEncryption.SetVaultUrl(vaultUrl);
 
-                    // B1: tạo 1 cặp key ECC
-                    (byte[] PrivateKeyECC, byte[] PublicKeyECC) = HybridEncryption.GenerateECCKey();
-                    // B2: Lưu 2 key ECC vào vault
-                    // 2 key này lưu vào db (chỉ lưu phần khác. VD: đặt tên là ...{random})
                     var guidKeyName = Guid.NewGuid().ToString();
-                    string pvKeyName = $"pvECC_key_{file.FileName}_{guidKeyName}";
-                    string pbKeyName = $"pbECC_key_{file.FileName}_{guidKeyName}";
-                    var res_pv = HybridEncryption.SetVaultSecretValue(appCode, pvKeyName, Convert.ToBase64String(PrivateKeyECC));
-                    var res_pb = HybridEncryption.SetVaultSecretValue(appCode, pbKeyName, Convert.ToBase64String(PublicKeyECC));
+
                     // B3: tạo key AES + B4: mã hóa file bằng AES + B5: mã hóa AES key bằng ECC public key + B6: key AES sau khi mã hóa add vào file đã mã hóa + B7: lưu file đã mã hóa lên server + đổi định dạng file thành .Encrypt (ngăn mở file)
-                    var outputFile = HybridEncryption.EncryptFileToStoring(filePath, folderPath, pvKeyName, pbKeyName);
+                    if (mucDoNum == 3) // tuyệt mật
+                    {
+                        // B1: tạo 1 cặp key ECC
+                        (byte[] PrivateKeyECC, byte[] PublicKeyECC) = HybridEncryption.GenerateECCKey();
+                        // B2: Lưu 2 key ECC vào vault
+                        // 2 key này lưu vào db (chỉ lưu phần khác. VD: đặt tên là ...{random})
+                        string pvKeyName = $"pvECC_key_{file.FileName}_{guidKeyName}";
+                        string pbKeyName = $"pbECC_key_{file.FileName}_{guidKeyName}";
+                        var res_pv = HybridEncryption.SetVaultSecretValue(appCode, pvKeyName, Convert.ToBase64String(PrivateKeyECC));
+                        var res_pb = HybridEncryption.SetVaultSecretValue(appCode, pbKeyName, Convert.ToBase64String(PublicKeyECC));
+                        // mỗi file 1 cặp key ECC
+                        var outputFile = HybridEncryption.EncryptFileToStoring(filePath, folderPath, pbKeyName);
+
+                        // tạo mật khẩu cho tài liệu tuyệt mật
+                    }
+                    else if (mucDoNum == 2) // tối mật
+                    {
+                        // B1: tạo 1 cặp key ECC
+                        (byte[] PrivateKeyECC, byte[] PublicKeyECC) = HybridEncryption.GenerateECCKey();
+                        // B2: Lưu 2 key ECC vào vault
+                        // 2 key này lưu vào db (chỉ lưu phần khác. VD: đặt tên là ...{random})
+                        string pvKeyName = $"pvECC_key_{file.FileName}_{guidKeyName}";
+                        string pbKeyName = $"pbECC_key_{file.FileName}_{guidKeyName}";
+                        var res_pv = HybridEncryption.SetVaultSecretValue(appCode, pvKeyName, Convert.ToBase64String(PrivateKeyECC));
+                        var res_pb = HybridEncryption.SetVaultSecretValue(appCode, pbKeyName, Convert.ToBase64String(PublicKeyECC));
+                        // mỗi file 1 cặp key ECC
+                        var outputFile = HybridEncryption.EncryptFileToStoring(filePath, folderPath, pbKeyName);
+                    }
+                    else // mật
+                    {
+                        // sử dụng key chung
+                        var outputFile = HybridEncryption.EncryptFileToStoring(filePath, folderPath, null);
+                    }
+
                     // B4: xóa file gốc
                     if (File.Exists(filePath))
                     {
                         File.Delete(filePath);
                         pathForDb = pathForDb + ".encrypt";
-                    }
-                    if (mucDoNum == 3) // tuyệt mật
-                    {
-                        // mỗi file 1 cặp key ECC + mật khẩu
-                    }
-                    else if (mucDoNum == 2) // tối mật
-                    {
-                        // mỗi file 1 cặp key ECC
-                    }
-                    else // mật
-                    {
-                        // sử dụng key chung
                     }
 
                     //lấy plainText
@@ -137,7 +152,7 @@ namespace DATN.Application.TaiLieu
                     string cypher_text = "";
                     var (htmlCH, _dicImageByte_CH) = ("", new Dictionary<string, byte[]>());
                     var fileExt = Path.GetExtension(file.FileName)?.ToLower();
-                    if(fileExt?.ToLower() == ".docx" || fileExt?.ToLower() == ".doc")
+                    if (fileExt?.ToLower() == ".docx" || fileExt?.ToLower() == ".doc")
                     {
                         plainText = GetPlainTextDocx(file);
                         // lấy html
@@ -151,7 +166,7 @@ namespace DATN.Application.TaiLieu
                         var imgNodes = bodyNode.SelectNodes("//img");
                         var lstImg = new List<Dictionary<string, string>>();
                         List<Dictionary<string, string>> imgDict = new List<Dictionary<string, string>>();
-                        if(imgNodes != null)
+                        if (imgNodes != null)
                         {
                             foreach (var img in imgNodes)
                             {
@@ -209,14 +224,15 @@ namespace DATN.Application.TaiLieu
                         nguoi_tao = currentUser,
                         ngay_chinh_sua = DateTime.Now,
                         nguoi_chinh_sua = currentUser,
-                        EccKeyName = guidKeyName,
-                        htmlContent = htmlCH
+                        EccKeyName = mucDoNum != 1 ? guidKeyName : null,
+                        htmlContent = htmlCH,
+                        is_has_password = mucDoNum == 3 ? true : false,
                     };
                     dsNewDocs.Add(newFile);
 
                 }
 
-                if(dsNewDocs != null && dsNewDocs.Count > 0)
+                if (dsNewDocs != null && dsNewDocs.Count > 0)
                 {
                     _context.tai_lieu.AddRange(dsNewDocs);
                     await _context.SaveChangesAsync(new CancellationToken());
@@ -383,7 +399,7 @@ namespace DATN.Application.TaiLieu
             {
                 var result = new List<nguoi_dung_dto>();
                 var currentUser = _context.nguoi_dung.FirstOrDefault(x => x.Id == currentUserId);
-                if(currentUser == null)
+                if (currentUser == null)
                 {
                     throw new Exception("Không tìm thấy người dùng.");
                 }
@@ -465,7 +481,7 @@ namespace DATN.Application.TaiLieu
 
                 var result = new List<ResultSearch>();
                 var currentUser = _context.nguoi_dung.FirstOrDefault(x => x.Id == request.current_user_id);
-                if(currentUser == null)
+                if (currentUser == null)
                 {
                     throw new Exception("Không tìm thấy người dùng.");
                 }
@@ -486,8 +502,8 @@ namespace DATN.Application.TaiLieu
                             {
                                 var mustQueries = new List<QueryContainer>();
                                 var mustNotQueries = new List<QueryContainer>();
-                                
-                                if(userGroup != null && userGroup.cap_do == 3)
+
+                                if (userGroup != null && userGroup.cap_do == 3)
                                 {
                                     mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
                                 }
@@ -535,7 +551,7 @@ namespace DATN.Application.TaiLieu
                                     }
                                 }
 
-                                if(request.loai_tai_lieu != null)
+                                if (request.loai_tai_lieu != null)
                                 {
                                     if (request.loai_tai_lieu == 5)//thư mục
                                     {
@@ -562,7 +578,7 @@ namespace DATN.Application.TaiLieu
                                     }
                                     else
                                     {
-                                        if(request.trang_thai == 2)
+                                        if (request.trang_thai == 2)
                                         {
                                             mustQueries.Add(q.Bool(b => b
                                                 .MustNot(m => m
@@ -652,6 +668,7 @@ namespace DATN.Application.TaiLieu
                     loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
                     plain_text = x.ContentText,
                     extension = x.FileType,
+                    cap_do = x.cap_do,
                 }).ToList());
 
                 //ds được chia sẻ với tôi
@@ -791,6 +808,7 @@ namespace DATN.Application.TaiLieu
                     loai_tai_lieu = GetLoaiTaiLieu(x.FileType),
                     plain_text = x.ContentText,
                     extension = x.FileType,
+                    cap_do = x.cap_do,
                 }).ToList());
 
                 // ds thư mục
@@ -825,7 +843,7 @@ namespace DATN.Application.TaiLieu
                                 }
                             }
                             mustNotQueries.Add(q.Exists(e => e.Field(f => f.thu_muc_cha_id.Suffix("keyword"))));
-                            
+
                             if (request.keySearch != null)
                             {
                                 mustQueries.Add(q.Wildcard(w => w
@@ -837,13 +855,13 @@ namespace DATN.Application.TaiLieu
 
                             if (request.loai_tai_lieu != null)
                             {
-                                if (request.loai_tai_lieu == 1 || request.loai_tai_lieu == 2 || request.loai_tai_lieu == 3|| request.loai_tai_lieu == 4)
+                                if (request.loai_tai_lieu == 1 || request.loai_tai_lieu == 2 || request.loai_tai_lieu == 3 || request.loai_tai_lieu == 4)
                                 {
                                     mustQueries.Add(q.Term(t => t.Field(f => f.id.Suffix("keyword")).Value("___no_result___")));
                                 }
                                 if (request.loai_tai_lieu == 5)//thư mục
                                 {
-                                   
+
                                 }
                             }
 
@@ -959,7 +977,7 @@ namespace DATN.Application.TaiLieu
             {
                 //tài liệu
                 var taiLieu = _context.tai_lieu.FirstOrDefault(x => x.Id == idTaiLieu);
-                if(taiLieu == null)
+                if (taiLieu == null)
                 {
                     throw new Exception("Không lấy được tài liệu.");
                 }
@@ -980,7 +998,7 @@ namespace DATN.Application.TaiLieu
                     var receiverPrivateKey = await HybridEncryption.GetVaultSecretValue("NHCH", pvKeyName);
                     var decrypt = HybridEncryption.DecryptFileToStoring(encryptFile, folderShare, receiverPrivateKey);
                     filePath = encryptFile;
-                    if (!System.IO.File.Exists(filePath)) 
+                    if (!System.IO.File.Exists(filePath))
                     {
                         throw new Exception("File không tồn tại trên hệ thống.");
                     }
@@ -1033,7 +1051,7 @@ namespace DATN.Application.TaiLieu
         {
             try
             {
-                if(request.thu_muc_id == null)
+                if (request.thu_muc_id == null)
                 {
                     throw new Exception("Chưa chọn thư mục");
                 }
@@ -1212,7 +1230,7 @@ namespace DATN.Application.TaiLieu
 
                             // mustQueries.Add(q.Term(t => t.Field(f => f.nguoi_tao.Suffix("keyword")).Value(currentUser.tai_khoan)));
                             // mustNotQueries.Add(q.Exists(e => e.Field(f => f.thu_muc_id.Suffix("keyword"))));
-                           
+
                             if (shareDocs != null && shareDocs.Any())
                             {
                                 mustQueries.Add(q.Terms(t => t
@@ -1517,7 +1535,7 @@ namespace DATN.Application.TaiLieu
             catch (Exception ex)
             {
                 throw new Exception(ex.Message);
-            } 
+            }
         }
 
         public async Task<string> HandleShareFile(ShareFileParams request)
@@ -1620,7 +1638,7 @@ namespace DATN.Application.TaiLieu
                 }
                 else
                 {
-                    if(File.Exists(oldFullPath + ".encrypt"))
+                    if (File.Exists(oldFullPath + ".encrypt"))
                     {
                         File.Move(oldFullPath + ".encrypt", newFullPath, true);
                     }
@@ -1679,7 +1697,7 @@ namespace DATN.Application.TaiLieu
                 {
                     File.Delete(fullPath);
                 }
-                
+
                 if (File.Exists(fullPathEncrypt))
                 {
                     File.Delete(fullPathEncrypt);
@@ -1705,16 +1723,16 @@ namespace DATN.Application.TaiLieu
                 throw new Exception($"Lỗi khi xóa tài liệu: {ex.Message}");
             }
         }
-        
+
         public async Task<string> DeletePublicDocs()
         {
             string rootPath = _config.GetSection("RootFileServer")["path"] ?? "";
             string share = _config.GetSection("RootFileServer")["share"] ?? "";
-            
+
             string folderShare = Path.Combine(rootPath, share);
             if (!Directory.Exists(folderShare))
             {
-                 return ("Thư mục chia sẻ không tồn tại trên server.");
+                return ("Thư mục chia sẻ không tồn tại trên server.");
             }
 
             try
@@ -1892,6 +1910,89 @@ namespace DATN.Application.TaiLieu
             {
                 var newString = await HybridEncryption.DecryptStringToStoring(content);
                 return newString;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<string> SetPasswordForDocument(string password, Guid tai_lieu_id)
+        {
+            try
+            {
+                // Tạo Salt ngẫu nhiên cho mật khẩu
+                byte[] salt = _helper.GenerateSalt();
+
+                // Mã hóa mật khẩu sử dụng PBKDF2 và salt
+                string hashPassword = _helper.GetPBKDF2(password, salt);
+
+                //update vào tài liệu
+                var taiLieu = await _context.tai_lieu.FirstOrDefaultAsync(x => x.Id == tai_lieu_id);
+                if (taiLieu != null)
+                {
+                    taiLieu.mat_khau = hashPassword;
+                    taiLieu.salt_code = Convert.ToBase64String(salt);
+                    taiLieu.is_has_password = true;
+
+                    _context.tai_lieu.Update(taiLieu);
+                    await _context.SaveChangesAsync(new CancellationToken());
+                }
+
+                return "Tạo mật khẩu thành công!";
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public Task<bool> CheckPassword(string password, Guid tai_lieu_id)
+        {
+            try
+            {
+                var taiLieu = _context.tai_lieu.FirstOrDefault(x => x.Id == tai_lieu_id);
+                if (taiLieu == null || taiLieu.is_has_password == false)
+                {
+                    throw new Exception("Tài liệu không có mật khẩu hoặc không tồn tại.");
+                }
+
+                var salt = Convert.FromBase64String(taiLieu.salt_code!);
+                var hashedPassword = _helper.GetPBKDF2(password, salt);
+
+                if (hashedPassword == taiLieu.mat_khau)
+                {
+                    return Task.FromResult(true);
+                }
+                else
+                {
+                    return Task.FromResult(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        
+        public Task<bool> CheckHasPassword(Guid tai_lieu_id)
+        {
+            try
+            {
+                var taiLieu = _context.tai_lieu.FirstOrDefault(x => x.Id == tai_lieu_id);
+                if (taiLieu == null || taiLieu.is_has_password == false)
+                {
+                    throw new Exception("Tài liệu không có mật khẩu hoặc không tồn tại.");
+                }
+
+                if (taiLieu.is_has_password == true && taiLieu.mat_khau != null)
+                {
+                    return Task.FromResult(true);
+                }
+                else
+                {
+                    return Task.FromResult(false);
+                }
             }
             catch (Exception ex)
             {

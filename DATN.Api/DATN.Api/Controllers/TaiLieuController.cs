@@ -247,7 +247,7 @@ namespace DATN.Api.Controllers
 
         #region api sửa tên tài liệu
         [HttpGet("preview")]
-        public async Task<IActionResult > Preview(Guid id)
+        public async Task<IActionResult> Preview(Guid id)
         {
             try
             {
@@ -268,6 +268,54 @@ namespace DATN.Api.Controllers
             try
             {
                 var result = await _taiLieuService.DeletePublicDocs();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        #endregion
+
+        #region tạo mật khẩu cho tài liệu
+        [HttpPut("set-password")]
+        public async Task<string> SetPassword([FromQuery] Guid tai_lieu_id, [FromBody] string password)
+        {
+            try
+            {
+                var result = await _taiLieuService.SetPasswordForDocument(password, tai_lieu_id);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        #endregion
+        
+        #region Check mật khẩu tài liệu
+        [HttpGet("check-password-doc")]
+        public async Task<bool> CheckPassword([FromQuery] Guid tai_lieu_id, [FromQuery] string password)
+        {
+            try
+            {
+                var result = await _taiLieuService.CheckPassword(password, tai_lieu_id);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        #endregion
+
+        #region Check mật khẩu tài liệu
+        [HttpGet("check-has-password")]
+        public async Task<bool> CheckHasPassword([FromQuery] Guid tai_lieu_id)
+        {
+            try
+            {
+                var result = await _taiLieuService.CheckHasPassword(tai_lieu_id);
                 return result;
             }
             catch (Exception ex)

@@ -48,5 +48,11 @@ namespace DATN.Domain.Entities
         #region Cập nhật 21/11/2025
         public string? htmlContent { get; set; } // chỉ dùng khi import file word
         #endregion
+
+        #region Cập nhật 5/12/2025: thêm thuộc tính đặt mật khẩu cho tài liệu tuyệt mật
+        public string? mat_khau { get; set; }
+        public string? salt_code { get; set; }
+        public bool? is_has_password{ get; set; }
+        #endregion
     }
 }

@@ -387,7 +387,7 @@ namespace DATN.Application.TaiLieu
 
                             // Lưu ảnh
                             originalImage.Save(filePath, new PngEncoder());
-                            var outputFile = HybridEncryption.EncryptFileToStoring(filePath, targetDriver, "pvECCLocal", "pbECCLocal");
+                            var outputFile = HybridEncryption.EncryptFileToStoring(filePath, targetDriver, "pbECCLocal");
                             // xóa file cũ chưa mã hóa
                             if(System.IO.File.Exists(filePath))
                             {
@@ -397,7 +397,7 @@ namespace DATN.Application.TaiLieu
                         catch
                         {
                             originalImage.Save(filePath, new PngEncoder());
-                            var outputFile = HybridEncryption.EncryptFileToStoring(filePath, targetDriver, "pvECCLocal", "pbECCLocal");
+                            var outputFile = HybridEncryption.EncryptFileToStoring(filePath, targetDriver, "pbECCLocal");
                             if (System.IO.File.Exists(filePath))
                             {
                                 System.IO.File.Delete(filePath);

@@ -1605,7 +1605,7 @@ Storing:
     }
 
     // neu 
-    public static async Task<string> EncryptFileToStoring(string filePath, string toFolder, string? pvKey_name, string? pbKey_name)
+    public static async Task<string> EncryptFileToStoring(string filePath, string toFolder, string? pbKey_name)
     {
         if (CryptoStoringBySIMDXOR == true)
         {
@@ -1740,7 +1740,7 @@ Storing:
                 Console.WriteLine($"[DEBUG] Tick: {tick}");
 
                 // dung cap key Local voi ephemeral Key, dinh kem ephemeral public Key trong data
-                var receiverPublicKey = Convert.FromBase64String(await GetVaultSecretValue("NHCH", pbKey_name ?? ""));
+                var receiverPublicKey = Convert.FromBase64String(await GetVaultSecretValue("NHCH", pbKey_name ?? "pbECCLocal"));
                 Console.WriteLine($"[DEBUG] Receiver PublicKey length: {receiverPublicKey.Length}");
 
                 var fileName = Path.GetFileName(filePath);
