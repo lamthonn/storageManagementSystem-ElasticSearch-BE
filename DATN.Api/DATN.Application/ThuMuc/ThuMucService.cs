@@ -163,7 +163,7 @@ namespace DATN.Application.ThuMuc
                 var phongBans = userInfor != null ? _context.nguoi_dung_2_danh_muc.Where(x => x.nguoi_dung_id == userInfor.Id).Select(x => x.danh_muc_id) : null;
                 var dmPhongBanInfor = phongBans != null ? _context.danh_muc.Where(x => phongBans.Contains(x.Id)) : null;
 
-                var dsThuMuc = _context.thu_muc.Where(x => dmPhongBanInfor != null ? dmPhongBanInfor.Select(a => a.ma).Contains(x.phong_ban) : false && x.thu_muc_cha_id == null).AsNoTracking();
+                var dsThuMuc = _context.thu_muc.Where(x => (dmPhongBanInfor != null ? dmPhongBanInfor.Select(a => a.ma).Contains(x.phong_ban) : false) && x.thu_muc_cha_id == null).AsNoTracking();
                 if(userGroup != null && userGroup.cap_do == 3)
                 {
                     dsThuMuc = dsThuMuc.Where(x=> x.nguoi_dung_id == nguoi_dung_id && x.thu_muc_cha_id == null);

@@ -1389,7 +1389,7 @@ namespace DATN.Application.TaiLieu
                                     mustQueries.Add(new MatchNoneQuery());
                                 }
                             }
-                            mustQueries.Add(q.Term(t => t.Field(f => f.thu_muc_cha_id.Suffix("keyword")).Value(request.thu_muc_id)));
+                            mustNotQueries.Add(q.Term(t => t.Field(f => f.thu_muc_cha_id.Suffix("keyword")).Value(request.thu_muc_id)));
                             if (request.keySearch != null)
                             {
                                 mustQueries.Add(q.Wildcard(w => w
@@ -1479,52 +1479,6 @@ namespace DATN.Application.TaiLieu
                     ngay_tao = x.ngay_tao,
                     ten_chu_so_huu = x.nguoi_tao,
                 }).ToList());
-
-
-                // QUERY -- QUERY -- QUERY
-                if (request.keySearch != null)
-                {
-                    result = result.Where(x => x.ten != null && x.ten.ToLower().Contains(request.keySearch.ToLower())).ToList(); //chỉ lấy file
-                }
-                if (request.loai_tai_lieu != null && request.loai_tai_lieu != 0)
-                {
-                    if (request.loai_tai_lieu == 5)// thư mục
-                    {
-                        result = result.Where(x => x.is_folder == true).ToList(); //chỉ lấy thư mục
-                    }
-                    else
-                    {
-                        result = result.Where(x => x.loai_tai_lieu == request.loai_tai_lieu && x.is_folder == false).ToList(); //chỉ lấy file
-                    }
-                }
-                if (request.trang_thai != null)
-                {
-                    result = result.Where(x => (request.trang_thai == 1 ? x.ten_chu_so_huu == currentUser.tai_khoan : (request.trang_thai == 2 ? x.ten_chu_so_huu != currentUser.tai_khoan : true))).ToList();
-                }
-                if (request.nguoi_dung_id != null)
-                {
-                    var nguoiDung = _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id);
-                    if (nguoiDung != null)
-                    {
-                        result = result.Where(x => x.ten_chu_so_huu == nguoiDung.tai_khoan).ToList();
-                    }
-                }
-                if (request.keyWord != null)
-                {
-                    result = result.Where(x => x.plain_text != null && x.plain_text.Contains(request.keyWord)).ToList();
-                }
-                if (request.ten_muc != null)
-                {
-                    result = result.Where(x => x.ten != null && x.ten.ToLower().Contains(request.ten_muc.ToLower())).ToList();
-                }
-                if (request.ngay_tao_from != null && request.ngay_tao_to != null)
-                {
-                    result = result.Where(x => x.ngay_sua_doi != null && x.ngay_sua_doi >= request.ngay_tao_from.Value.AddHours(7) && x.ngay_sua_doi <= request.ngay_tao_to.Value.AddHours(7)).ToList();
-                }
-                if (request.ngay_chinh_sua_from != null && request.ngay_chinh_sua_to != null)
-                {
-                    result = result.Where(x => x.ngay_sua_doi != null && x.ngay_sua_doi >= request.ngay_chinh_sua_from.Value.AddHours(7) && x.ngay_sua_doi <= request.ngay_chinh_sua_to.Value.AddHours(7)).ToList();
-                }
 
                 //sort (folder trước - file sau) && sắp xếp theo ngày sửa đổi gần nhất
                 result = result.OrderByDescending(x => x.is_folder).ThenByDescending(x => x.ngay_sua_doi).ToList();
