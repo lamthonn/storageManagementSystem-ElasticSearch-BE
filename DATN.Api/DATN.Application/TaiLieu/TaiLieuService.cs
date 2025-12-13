@@ -842,12 +842,12 @@ namespace DATN.Application.TaiLieu
                                     mustQueries.Add(new MatchNoneQuery());
                                 }
                             }
-                            mustNotQueries.Add(q.Exists(e => e.Field(f => f.thu_muc_cha_id.Suffix("keyword"))));
+                            mustNotQueries.Add(q.Exists(e => e.Field(f => f.thu_muc_cha_id)));
 
                             if (request.keySearch != null)
                             {
                                 mustQueries.Add(q.Wildcard(w => w
-                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Field(f => f.ten)
                                      .Value($"*{request.keySearch}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
                                  ));
@@ -1389,13 +1389,12 @@ namespace DATN.Application.TaiLieu
                                     mustQueries.Add(new MatchNoneQuery());
                                 }
                             }
-                            mustNotQueries.Add(q.Term(t => t.Field(f => f.thu_muc_cha_id.Suffix("keyword")).Value(request.thu_muc_id)));
+                            mustQueries.Add(q.Term(t => t.Field(f => f.thu_muc_cha_id).Value(request.thu_muc_id)));
                             if (request.keySearch != null)
                             {
-                                mustQueries.Add(q.Wildcard(w => w
-                                     .Field(f => f.ten.Suffix("keyword"))
-                                     .Value($"*{request.keySearch}*") // không ToLower()
-                                     .CaseInsensitive(true) // giữ nếu ES >= 7.10
+                                mustQueries.Add(q.Match(m => m
+                                    .Field("ten.prefix")
+                                    .Query(request.keySearch)
                                  ));
                             }
 
@@ -1440,7 +1439,7 @@ namespace DATN.Application.TaiLieu
                             if (request.ten_muc != null)
                             {
                                 mustQueries.Add(q.Wildcard(w => w
-                                     .Field(f => f.ten.Suffix("keyword"))
+                                     .Field(f => f.ten)
                                      .Value($"*{request.ten_muc}*") // không ToLower()
                                      .CaseInsensitive(true) // giữ nếu ES >= 7.10
                                  ));
