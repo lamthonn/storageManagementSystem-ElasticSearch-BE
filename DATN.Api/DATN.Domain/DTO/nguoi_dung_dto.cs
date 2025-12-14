@@ -38,6 +38,13 @@ namespace DATN.Domain.DTO
     {
         public string RefreshToken { get; set; }
     }
+
+    public class ChangePasswordRequest
+    {
+        public Guid nguoi_dung_id { get; set; }
+        public string old_password { get; set; }
+        public string new_password { get; set; }
+    }
     public class nguoiDungPaginParams : PaginParams
     {
         public string? ten { get; set; }

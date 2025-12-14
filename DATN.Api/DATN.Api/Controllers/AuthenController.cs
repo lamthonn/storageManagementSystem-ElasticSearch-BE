@@ -62,5 +62,19 @@ namespace DATN.Api.Controllers
                 throw new Exception(e.Message);
             }
         }
+
+        [HttpPut("doi-mat-khau")]
+        public Task<string> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            try
+            {
+                var messageRespone = _authenService.ChangePassword(request);
+                return messageRespone;
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
     }
 }

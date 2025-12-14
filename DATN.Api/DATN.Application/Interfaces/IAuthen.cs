@@ -13,5 +13,6 @@ namespace DATN.Application.Interfaces
         public Task<nguoi_dung_dto> login(loginParam dto);
         public Task<string> Register(nguoi_dung_dto request);
         public Task<nguoi_dung_dto> RefreshToken(RefreshTokenRequest request);
+        public Task<string> ChangePassword(ChangePasswordRequest request);
     }
 }

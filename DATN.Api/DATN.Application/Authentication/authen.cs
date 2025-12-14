@@ -151,5 +151,41 @@ namespace DATN.Application.Authentication
             }
         }
 
+        public async Task<string> ChangePassword(ChangePasswordRequest request)
+        {
+            try
+            {
+                var user = _context.nguoi_dung.FirstOrDefault(x => x.Id == request.nguoi_dung_id);
+                if (user == null)
+                {
+                    return "Người dùng không tồn tại";
+                }
+
+                // Tạo lại hash mật khẩu từ mật khẩu cũ người dùng nhập vào và salt trong DB
+                var salt = Convert.FromBase64String(user.salt_code!); // Salt đã lưu trong DB
+                
+                // check mật khẩu cũ
+                var hashedOldPassword = _hepper.GetPBKDF2(request.old_password, salt);
+                if(hashedOldPassword != user.mat_khau)
+                {
+                    return "Mật khẩu không chính xác";
+                }
+
+                // Mã hóa mật khẩu sử dụng PBKDF2 và salt
+                string hashPassword = _hepper.GetPBKDF2(request.new_password, salt);
+                user.mat_khau = hashPassword;
+                user.is_doi_mk = true;
+                user.ngay_doi_mk = DateTime.Now;
+                
+                _context.Update(user);
+                await _context.SaveChangesAsync();
+
+                return "Đổi mật khẩu thành công";
+            }   
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
     }
 }
