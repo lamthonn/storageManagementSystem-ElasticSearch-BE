@@ -325,7 +325,7 @@ namespace DATN.Application.TaiLieu
                 {
                     if (userGroup.cap_do == 1 || userGroup.cap_do == 2)
                     {
-                        datas = allData;
+                        datas = allData.Where(x => x.thu_muc_id == null);
                     }
                     else if (userGroup.cap_do == 3)
                     {
