@@ -89,11 +89,9 @@ namespace DATN.Infrastructure.Data
                         .Text(t => t
                             .Name(x => x.ten)
                             .Analyzer("vi_analyzer")
-                            .SearchAnalyzer("vi_analyzer")
                             .Fields(f => f
-                                .Text(tt => tt
-                                    .Name("prefix")
-                                    .Analyzer("vi_prefix")
+                                .Keyword(k => k
+                                    .Name("raw")
                                 )
                             )
                         )
@@ -106,6 +104,7 @@ namespace DATN.Infrastructure.Data
                         .Keyword(k => k.Name(x => x.FileType))
                         .Number(n => n.Name(x => x.FileSize).Type(NumberType.Long))
                         .Date(d => d.Name(x => x.IndexedAt))
+                        .Text(t => t.Name(x => x.eccKeyName))
                     )
                 )
             );

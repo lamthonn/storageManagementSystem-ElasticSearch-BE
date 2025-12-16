@@ -59,6 +59,8 @@ namespace DATN.Domain.DTO
         public string? nguoi_tao { get; set; }
         public DateTime? ngay_chinh_sua { get; set; }
         public string? nguoi_chinh_sua { get; set; }
+        public string? eccKeyName { get; set; }
+
     }
 
 }

@@ -98,8 +98,8 @@ namespace DATN.Application.Utils
                 ngay_chinh_sua = tl.ngay_chinh_sua,
                 nguoi_chinh_sua = tl.nguoi_chinh_sua,
                 thu_muc_id = tl.thu_muc_id,
-
                 ContentText = tl.ContentText,
+                eccKeyName = tl.EccKeyName,
                 encryptedTokens= encryptedTokens
             };
         }

@@ -502,6 +502,7 @@ namespace DATN.Application.TaiLieu
                             {
                                 var mustQueries = new List<QueryContainer>();
                                 var mustNotQueries = new List<QueryContainer>();
+                                var shouldQueries = new List<QueryContainer>();
 
                                 if (userGroup != null && userGroup.cap_do == 3)
                                 {
@@ -528,10 +529,11 @@ namespace DATN.Application.TaiLieu
 
                                 if (request.keySearch != null)
                                 {
-                                    mustQueries.Add(q.Wildcard(w => w
-                                       .Field(f => f.ten)
-                                       .Value($"*{request.keySearch}*")
+                                    shouldQueries.Add(q.Wildcard(w => w
+                                        .Field("ten.raw")
+                                        .Value($"*{request.ten_muc}*")
                                     ));
+
                                     // fulltext search
                                     // 1. Tokenize query
                                     var tokens = ElasticSearchService.AnalyzeText(request.keySearch, ElasticSearchUrl);
@@ -544,10 +546,14 @@ namespace DATN.Application.TaiLieu
                                     if (hashedTokens.Count > 0)
                                     {
                                         // 3. Query vào trường EncryptedTokens
-                                        mustQueries.Add(q.Terms(t => t
-                                            .Field(f => f.encryptedTokens)   // trường lưu blind index
-                                            .Terms(hashedTokens)
-                                        ));
+                                        mustQueries.Add(q.TermsSet(ts => ts
+                                                .Field("encryptedTokens")
+                                                .Terms(hashedTokens)
+                                                .MinimumShouldMatchScript(msm => msm
+                                                    .Source("params.num_terms")
+                                                )
+                                            )
+                                        );
                                     }
                                 }
 
@@ -611,11 +617,14 @@ namespace DATN.Application.TaiLieu
 
                                     if (hashedTokens.Count > 0)
                                     {
-                                        // 3. Query vào trường EncryptedTokens
-                                        mustQueries.Add(q.Terms(t => t
-                                            .Field("encryptedTokens")   // trường lưu blind index
-                                            .Terms(hashedTokens)
-                                        ));
+                                        mustQueries.Add(q.TermsSet(ts => ts
+                                                .Field("encryptedTokens")
+                                                .Terms(hashedTokens)
+                                                .MinimumShouldMatchScript(msm => msm
+                                                    .Source("params.num_terms")
+                                                )
+                                            )
+                                        );
                                     }
                                     else
                                     {
@@ -626,10 +635,9 @@ namespace DATN.Application.TaiLieu
                                 if (request.ten_muc != null)
                                 {
                                     mustQueries.Add(q.Wildcard(w => w
-                                         .Field(f => f.ten.Suffix("keyword"))
-                                         .Value($"*{request.ten_muc}*") // không ToLower()
-                                         .CaseInsensitive(true) // giữ nếu ES >= 7.10
-                                     ));
+                                        .Field("ten.raw")
+                                        .Value($"*{request.ten_muc}*")
+                                    ));
                                 }
 
                                 if (request.ngay_tao_from != null && request.ngay_tao_to != null)
@@ -651,7 +659,8 @@ namespace DATN.Application.TaiLieu
                                 }
 
                                 return b.Must(mustQueries.ToArray())
-                                    .MustNot(mustNotQueries.ToArray());
+                                    .MustNot(mustNotQueries.ToArray())
+                                    .Should(shouldQueries.ToArray());
                             }
                         )
                     )
@@ -669,6 +678,7 @@ namespace DATN.Application.TaiLieu
                     plain_text = x.ContentText,
                     extension = x.FileType,
                     cap_do = x.cap_do,
+                    EccKeyName = x.eccKeyName,
                 }).ToList());
 
                 //ds được chia sẻ với tôi
@@ -757,10 +767,38 @@ namespace DATN.Application.TaiLieu
 
                             if (request.keyWord != null)
                             {
-                                mustQueries.Add(q.Match(m => m
-                                    .Field(f => f.ContentText)
-                                    .Query(request.keyWord)
-                                ));
+                                //mustQueries.Add(q.Match(m => m
+                                //    .Field(f => f.ContentText)
+                                //    .Query(request.keyWord)
+                                //));
+                                var tokens = ElasticSearchService.AnalyzeText(request.keyWord, ElasticSearchUrl);
+
+                                // 2. Hash token bằng BlindIndexKey
+                                var hashedTokens = tokens
+                                    .Select(t => ElasticSearchService.HashToken(blindKey, t))
+                                    .ToList();
+
+                                if (hashedTokens.Count > 0)
+                                {
+                                    // 3. Query vào trường EncryptedTokens
+                                    //mustQueries.Add(q.Terms(t => t
+                                    //    .Field("encryptedTokens")   // trường lưu blind index
+                                    //    .Terms(hashedTokens)
+                                    //));
+
+                                    mustQueries.Add(q.TermsSet(ts => ts
+                                            .Field("encryptedTokens")
+                                            .Terms(hashedTokens)
+                                            .MinimumShouldMatchScript(msm => msm
+                                                .Source("params.num_terms")
+                                            )
+                                        )
+                                    );
+                                }
+                                else
+                                {
+                                    mustQueries.Add(q.Term(t => t.Field(f => f.Id.Suffix("keyword")).Value("___no_result___")));
+                                }
                             }
 
                             if (request.ten_muc != null)
@@ -900,6 +938,11 @@ namespace DATN.Application.TaiLieu
                                  ));
                             }
 
+                            if(request.keyWord != null)
+                            {
+                                mustQueries.Add(q.Term(t => t.Field(f => f.id.Suffix("keyword")).Value("___no_result___")));
+                            }
+
                             if (request.ngay_tao_from != null && request.ngay_tao_to != null)
                             {
                                 mustQueries.Add(q.DateRange(dr => dr
@@ -933,6 +976,28 @@ namespace DATN.Application.TaiLieu
                     ngay_tao = x.ngay_tao,
                     ten_chu_so_huu = x.nguoi_tao,
                 }).ToList());
+
+                // query trước khi trả ra kết quả
+                if (request.keyWord != null)
+                {
+                    var newResult = new List<ResultSearch>();
+                    foreach (var item in result)
+                    {
+                        if (item.is_folder == true)
+                        {
+                            newResult.Add(item);
+                        }
+                        else
+                        {
+                            var decryptedContent = await HybridEncryption.DecryptStringToStoring(item.plain_text ?? "");
+                            if(decryptedContent != null && decryptedContent.Trim().ToLower().Contains(request.keyWord.ToLower().Trim()))
+                            {
+                                newResult.Add(item);
+                            }
+                        }
+                    }
+                    result = newResult;
+                }
 
                 //sort (folder trước - file sau) && sắp xếp theo ngày sửa đổi gần nhất
                 result = result.OrderByDescending(x => x.is_folder).ThenByDescending(x => x.ngay_sua_doi).ToList();

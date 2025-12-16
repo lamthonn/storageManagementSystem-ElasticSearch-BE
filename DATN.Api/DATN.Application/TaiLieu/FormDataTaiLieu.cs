@@ -31,7 +31,7 @@ namespace DATN.Application.TaiLieu
         public string? html_content { get; set; } // đường dẫn file
         public Guid? thu_muc_id { get; set; }
         public int? cap_do { get; set; }
-
+        public string? EccKeyName { get; set; } 
 
     }
 
