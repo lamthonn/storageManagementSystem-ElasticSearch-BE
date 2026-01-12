@@ -1037,7 +1037,6 @@ namespace DATN.Application.TaiLieu
         }
         public async Task<DownloadResult> HandleDownloadTaiLieu(Guid idTaiLieu)
         {
-
             try
             {
                 //tài liệu
@@ -1077,6 +1076,10 @@ namespace DATN.Application.TaiLieu
                     HybridEncryption.SetVaultUrl(vaultUrl);
 
                     string pvKeyName = $"pvECC_key_{taiLieu.ten}_{taiLieu.EccKeyName}";
+                    if(taiLieu.cap_do == 1)
+                    {
+                        pvKeyName = "pvECCLocal";
+                    }
                     var receiverPrivateKey = await HybridEncryption.GetVaultSecretValue("NHCH", pvKeyName);
                     var decrypt = HybridEncryption.DecryptFileToStoring(filePath, folderShare, receiverPrivateKey);
 
@@ -1636,7 +1639,7 @@ namespace DATN.Application.TaiLieu
 
                 // Tách thư mục và phần mở rộng
                 string directory = Path.GetDirectoryName(oldRelativePath) ?? "";
-                string extension = Path.GetExtension(oldRelativePath);
+                string extension = Path.GetExtension(oldRelativePath.Replace(".encrypt", ""));
                 string newFileName = $"{request.new_name}{extension}";
 
                 // Tạo đường dẫn mới

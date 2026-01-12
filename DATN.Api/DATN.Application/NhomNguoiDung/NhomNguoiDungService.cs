@@ -124,6 +124,13 @@ namespace DATN.Application.NhomNguoiDung
                     userGroups = userGroups.Where(x => x.trang_thai == request.trang_thai);
                 }
 
+                if(request.fromDate != null && request.toDate != null)
+                {
+                    var localFromDate = request.fromDate.Value.AddHours(7);
+                    var localToDate = request.toDate.Value.AddHours(7);
+                    userGroups = userGroups.Where(x => x.ngay_tao >= localFromDate.Date && x.ngay_tao <= localToDate.Date);
+                }
+
                 var dataQueryDto = userGroups
                                     .OrderByDescending(x => x.ngay_tao)
                                     .Select(x => new nhom_nguoi_dung_dto

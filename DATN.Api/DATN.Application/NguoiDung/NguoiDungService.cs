@@ -71,6 +71,12 @@ namespace DATN.Application.NguoiDung
                 {
                     userGroups = userGroups.Where(x => x.trang_thai == request.trang_thai);
                 }
+                if (request.fromDate != null && request.fromDate != null)
+                {
+                    var localFromDate = request.fromDate?.AddHours(7);
+                    var localToDate = request.toDate?.AddHours(7);
+                    userGroups = userGroups.Where(x => x.ngay_tao >= localFromDate && x.ngay_tao <= localToDate);
+                }
 
                 var lstPhongban = _context.danh_muc.Where(x => x.ma_dinh_danh == "danh-muc-phong-ban").Select( x=> new danh_muc_dto
                 {
