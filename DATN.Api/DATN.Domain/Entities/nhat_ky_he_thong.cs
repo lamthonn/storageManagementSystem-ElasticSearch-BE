@@ -15,7 +15,7 @@ namespace DATN.Domain.Entities
         [StringLength(512)]
         public string command { get; set; }
         [StringLength(255)]
-        public string tai_khoan { get; set; }
+        public string? tai_khoan { get; set; }
         public string? ten { get; set; }
         public Guid? command_id { get; set; }
         public Guid? dieu_huong_id { get; set; }

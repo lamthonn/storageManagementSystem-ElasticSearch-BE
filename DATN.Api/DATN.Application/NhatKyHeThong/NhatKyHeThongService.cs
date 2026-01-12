@@ -82,7 +82,7 @@ namespace DATN.Application.NhatKyHeThong
                         command_id = cmd != null ? cmd.id : null,
                         loai = request.loai,
                         level = request.level,
-                        tai_khoan = userName,
+                        tai_khoan = userName ?? "anonymous",
                         TimeStamp = DateTime.Now,
                         detail = request.detail
                     };
