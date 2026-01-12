@@ -13,7 +13,7 @@ namespace DATN.Domain.Entities
         [Key]
         public Guid id { get; set; }
         [StringLength(512)]
-        public string command { get; set; }
+        public string? command { get; set; }
         [StringLength(255)]
         public string? tai_khoan { get; set; }
         public string? ten { get; set; }
@@ -28,6 +28,6 @@ namespace DATN.Domain.Entities
         public virtual dm_command? dm_command { get; set; }
 
         [ForeignKey("dieu_huong_id")]
-        public virtual dieu_huong dieu_huong { get; set; }
+        public virtual dieu_huong? dieu_huong { get; set; }
     }
 }
