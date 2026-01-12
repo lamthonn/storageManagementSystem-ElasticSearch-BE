@@ -12,7 +12,7 @@ namespace DATN.Domain.Entities
     {
         [Key]
         public Guid id { get; set; }
-        [StringLength(512)]
+        [Column(TypeName = "text")]
         public string? command { get; set; }
         [StringLength(255)]
         public string? tai_khoan { get; set; }
