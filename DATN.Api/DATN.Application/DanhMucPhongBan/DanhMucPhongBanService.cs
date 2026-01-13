@@ -242,15 +242,18 @@ namespace DATN.Application.DanhMucPhongBan
 
                 if(currentUser != null)
                 {
-                    var userInfor = _context.nguoi_dung.FirstOrDefault(x => x.tai_khoan == currentUser);
-                    var dsDanhMucByNguoiDung = _context.nguoi_dung_2_danh_muc.Where(x => x.nguoi_dung_id == userInfor!.Id).Select(x=> x.danh_muc_id);
-                    if(dsDanhMucByNguoiDung != null && dsDanhMucByNguoiDung.Count() > 0)
+                    if(currentUser != "admin")
                     {
-                        dsDanhMuc = dsDanhMuc.Where(x => dsDanhMucByNguoiDung.Contains(x.Id));
-                    }
-                    else
-                    {
-                        dsDanhMuc = dsDanhMuc.Where(x => x.Id == Guid.Empty);
+                        var userInfor = _context.nguoi_dung.FirstOrDefault(x => x.tai_khoan == currentUser);
+                        var dsDanhMucByNguoiDung = _context.nguoi_dung_2_danh_muc.Where(x => x.nguoi_dung_id == userInfor!.Id).Select(x=> x.danh_muc_id);
+                        if(dsDanhMucByNguoiDung != null && dsDanhMucByNguoiDung.Count() > 0)
+                        {
+                            dsDanhMuc = dsDanhMuc.Where(x => dsDanhMucByNguoiDung.Contains(x.Id));
+                        }
+                        else
+                        {
+                            dsDanhMuc = dsDanhMuc.Where(x => x.Id == Guid.Empty);
+                        }
                     }
                 }
                 else
