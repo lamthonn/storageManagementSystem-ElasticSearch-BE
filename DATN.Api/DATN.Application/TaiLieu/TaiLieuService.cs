@@ -1723,8 +1723,14 @@ namespace DATN.Application.TaiLieu
                 if (File.Exists(fullPath))
                 {
                     Console.WriteLine("[DEBUG5]");
-
-                    File.Delete(fullPath);
+                    try
+                    {
+                        File.Delete(fullPath);
+                    }
+                    catch (Exception ex) { 
+                        Console.WriteLine("[DEBUG5.5]");
+                        throw new Exception(ex.Message);
+                    }
                 }
 
                 if (File.Exists(fullPathEncrypt))
