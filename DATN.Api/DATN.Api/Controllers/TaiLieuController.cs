@@ -315,6 +315,8 @@ namespace DATN.Api.Controllers
         {
             try
             {
+
+                Console.WriteLine("[DEBUG_CTL]", tai_lieu_id);
                 var result = await _taiLieuService.CheckHasPassword(tai_lieu_id);
                 return result;
             }

@@ -2000,23 +2000,30 @@ namespace DATN.Application.TaiLieu
         {
             try
             {
+                Console.WriteLine("[DEBUG1]", tai_lieu_id);
                 var taiLieu = _context.tai_lieu.FirstOrDefault(x => x.Id == tai_lieu_id);
                 if (taiLieu == null || taiLieu.is_has_password == false)
                 {
+                    Console.WriteLine("[DEBUG2]", tai_lieu_id);
+
                     throw new Exception("Tài liệu không có mật khẩu hoặc không tồn tại.");
                 }
 
+                Console.WriteLine("[DEBUG3]", tai_lieu_id);
                 if (taiLieu.is_has_password == true && taiLieu.mat_khau != null)
                 {
+                    Console.WriteLine("[DEBUG4]", tai_lieu_id);
                     return Task.FromResult(true);
                 }
                 else
                 {
+                    Console.WriteLine("[DEBUG5]", tai_lieu_id);
                     return Task.FromResult(false);
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine("[DEBUG6]", tai_lieu_id);
                 throw new Exception(ex.Message);
             }
         }
