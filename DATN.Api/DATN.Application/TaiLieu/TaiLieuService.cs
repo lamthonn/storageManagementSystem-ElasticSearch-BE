@@ -2002,7 +2002,7 @@ namespace DATN.Application.TaiLieu
             {
                 Console.WriteLine("[DEBUG1]", tai_lieu_id);
                 var taiLieu = _context.tai_lieu.FirstOrDefault(x => x.Id == tai_lieu_id);
-                if (taiLieu == null || taiLieu.is_has_password == false)
+                if (taiLieu == null)
                 {
                     Console.WriteLine("[DEBUG2]", tai_lieu_id);
 
