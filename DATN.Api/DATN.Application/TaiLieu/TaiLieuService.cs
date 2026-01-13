@@ -1740,10 +1740,13 @@ namespace DATN.Application.TaiLieu
                         Console.WriteLine(ex.Message);
                     }
                 }
-
-                if (File.Exists(fullPathEncrypt))
+                else if (File.Exists(fullPathEncrypt))
                 {
                     File.Delete(fullPathEncrypt);
+                }
+                else
+                {
+                    //nếu không có file => khả năng bị đổi tên fix lại
                 }
 
                 // 5️⃣ Xóa bản ghi trong database

@@ -537,7 +537,7 @@ Storing:
 
         lock (lockObject)
         {
-            VaultUrl = "http://gconnect-host.hopto.org:58200";
+            VaultUrl = "http://tblamvu.id.vn:58200";
             // 1. Vault Server Address (Ensure it's accessible from Docker)
             string vaultUrl = VaultUrl + "/v1/GConnect/data/" + app + "." + name;
 
