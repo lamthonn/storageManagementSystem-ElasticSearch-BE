@@ -325,7 +325,9 @@ namespace DATN.Application.TaiLieu
                 {
                     if (userGroup.cap_do == 1 || userGroup.cap_do == 2)
                     {
-                        datas = allData.Where(x => x.thu_muc_id == null);
+                        var data_ids = allData.Where(x => x.thu_muc_id == null).Select(x => x.Id);
+                        datas = _context.tai_lieu.Where(x => ShareData.Contains(x.Id) || data_ids.Contains(x.Id));
+                        
                     }
                     else if (userGroup.cap_do == 3)
                     {
