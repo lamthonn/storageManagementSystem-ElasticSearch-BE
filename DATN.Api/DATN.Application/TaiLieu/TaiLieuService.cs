@@ -1111,11 +1111,11 @@ namespace DATN.Application.TaiLieu
             }
             catch (Exception ex)
             {
-                Console.WriteLine("LAMVU:", ex.Message);
+                Console.WriteLine("LAMVU:"+ ex.Message);
                 throw new Exception(ex.Message);
             }
         }
-
+         
         public async Task<PaginatedList<ResultSearch>> GetDocsByFolder(ResultSearchParams request)
         {
             try
