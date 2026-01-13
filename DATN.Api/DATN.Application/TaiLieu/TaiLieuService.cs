@@ -1075,7 +1075,7 @@ namespace DATN.Application.TaiLieu
                     HybridEncryption.SetAppCode(appCode);
                     HybridEncryption.SetVaultUrl(vaultUrl);
 
-                    string pvKeyName = $"pvECC_key_{taiLieu.ten}_{taiLieu.EccKeyName}";
+                    string pvKeyName = $"pvECC_key_{taiLieu.ma}_{taiLieu.EccKeyName}";
                     if(taiLieu.cap_do == 1)
                     {
                         pvKeyName = "pvECCLocal";
