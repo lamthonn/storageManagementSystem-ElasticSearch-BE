@@ -1058,7 +1058,7 @@ namespace DATN.Application.TaiLieu
                     HybridEncryption.SetAppCode(appCode);
                     HybridEncryption.SetVaultUrl(vaultUrl);
 
-                    string pvKeyName = $"pvECC_key_{taiLieu.ten}_{taiLieu.EccKeyName}";
+                    string pvKeyName = $"pvECC_key_{taiLieu.ma}_{taiLieu.EccKeyName}";
                     var receiverPrivateKey = await HybridEncryption.GetVaultSecretValue("NHCH", pvKeyName);
                     var decrypt = HybridEncryption.DecryptFileToStoring(encryptFile, folderShare, receiverPrivateKey);
                     filePath = encryptFile;
