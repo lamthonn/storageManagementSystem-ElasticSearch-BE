@@ -1111,6 +1111,7 @@ namespace DATN.Application.TaiLieu
             }
             catch (Exception ex)
             {
+                Console.WriteLine("LAMVU:", ex.Message);
                 throw new Exception(ex.Message);
             }
         }
@@ -1701,60 +1702,49 @@ namespace DATN.Application.TaiLieu
         {
             try
             {
-                Console.WriteLine("[DEBUG1]");
                 // 1️⃣ Lấy thông tin tài liệu
                 var doc = await _context.tai_lieu.FirstOrDefaultAsync(x => x.Id == id);
                 if (doc == null)
                 {
-                    Console.WriteLine("[DEBUG2]");
                     throw new Exception("Không tìm thấy tài liệu cần xóa!");
                 }
 
                 // 2️⃣ Lấy đường dẫn gốc từ cấu hình
                 string rootPath = _config.GetSection("RootFileServer")["path"] ?? "";
-                Console.WriteLine("[DEBUG3]");
 
                 // 3️⃣ Xác định đường dẫn thật trên server
                 string fullPath = Path.Combine(rootPath, doc.duong_dan);
                 string fullPathEncrypt = Path.Combine(rootPath, doc.duong_dan + ".encrypt");
-                Console.WriteLine("[DEBUG4]");
 
                 // 4️⃣ Xóa file thật trên ổ đĩa (nếu có)
                 if (File.Exists(fullPath))
                 {
-                    Console.WriteLine("[DEBUG5]");
                     try
                     {
                         File.Delete(fullPath);
                     }
                     catch (Exception ex) { 
-                        Console.WriteLine("[DEBUG5.5]");
                         Console.WriteLine(ex.Message);
                     }
                 }
 
                 if (File.Exists(fullPathEncrypt))
                 {
-                    Console.WriteLine("[DEBUG6]");
-
                     File.Delete(fullPathEncrypt);
                 }
 
                 // 5️⃣ Xóa bản ghi trong database
                 _context.tai_lieu.Remove(doc);
                 await _context.SaveChangesAsync();
-                Console.WriteLine("[DEBUG7]");
 
                 // Xóa trong Elasticsearch
                 var esResponse = await _client.DeleteAsync<tai_lieu>(id, d => d.Index("tai_lieu"));
 
                 if (!esResponse.IsValid)
                 {
-                    Console.WriteLine("[DEBUG8]");
                     // Có thể log lại lỗi nhưng KHÔNG throw để tránh rollback DB
                     Console.WriteLine($"⚠️ Không thể xóa trong Elasticsearch: {esResponse.OriginalException?.Message}");
                 }
-                Console.WriteLine("[DEBUG9]");
                 return "Xóa tài liệu thành công!";
             }
             catch (Exception ex)
