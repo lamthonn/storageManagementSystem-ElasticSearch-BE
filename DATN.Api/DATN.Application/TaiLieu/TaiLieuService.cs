@@ -1040,6 +1040,8 @@ namespace DATN.Application.TaiLieu
             try
             {
                 //tài liệu
+                Console.WriteLine("[DEBUG1]");
+
                 var taiLieu = _context.tai_lieu.FirstOrDefault(x => x.Id == idTaiLieu);
                 if (taiLieu == null)
                 {
@@ -1053,6 +1055,8 @@ namespace DATN.Application.TaiLieu
 
                 if (!System.IO.File.Exists(filePath))
                 {
+                    Console.WriteLine("[DEBUG2]");
+
                     string appCode = _config.GetSection("AppCode").Value ?? "";
                     var vaultUrl = _config.GetSection("Uri")["vault"] + "";
                     HybridEncryption.SetAppCode(appCode);
@@ -1070,20 +1074,28 @@ namespace DATN.Application.TaiLieu
 
                 if (filePath.Trim().EndsWith(".encrypt"))
                 {
+                    Console.WriteLine("[DEBUG3]");
+
                     string appCode = _config.GetSection("AppCode").Value ?? "";
                     var vaultUrl = _config.GetSection("Uri")["vault"] + "";
                     HybridEncryption.SetAppCode(appCode);
                     HybridEncryption.SetVaultUrl(vaultUrl);
 
                     string pvKeyName = $"pvECC_key_{taiLieu.ma}_{taiLieu.EccKeyName}";
-                    if(taiLieu.cap_do == 1)
+                    Console.WriteLine("[KEYNAME]" + pvKeyName);
+
+                    if (taiLieu.cap_do == 1)
                     {
                         pvKeyName = "pvECCLocal";
                     }
                     var receiverPrivateKey = await HybridEncryption.GetVaultSecretValue("NHCH", pvKeyName);
+                    Console.WriteLine("[receiverPrivateKey]" + receiverPrivateKey);
+
                     var decrypt = HybridEncryption.DecryptFileToStoring(filePath, folderShare, receiverPrivateKey);
 
                     filePath = decrypt.Result.outputFile.ToString();
+                    Console.WriteLine("[DEBUG4]" + pvKeyName);
+
                 }
 
                 var memory = new MemoryStream();
@@ -1092,6 +1104,7 @@ namespace DATN.Application.TaiLieu
                     stream.CopyTo(memory);
                 }
                 memory.Position = 0;
+                Console.WriteLine("[DEBUG5]");
 
                 var contentType = GetContentType(filePath);
                 await _logger.AddLog(new nhat_ky_he_thong_dto
