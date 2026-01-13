@@ -1729,7 +1729,7 @@ namespace DATN.Application.TaiLieu
                     }
                     catch (Exception ex) { 
                         Console.WriteLine("[DEBUG5.5]");
-                        throw new Exception(ex.Message);
+                        Console.WriteLine(ex.Message);
                     }
                 }
 
