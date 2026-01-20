@@ -4,6 +4,7 @@ using DATN.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DATN.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260119092732_add_table_thong_bao")]
+    partial class add_table_thong_bao
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -546,50 +549,6 @@ namespace DATN.Infrastructure.Migrations
                     b.HasIndex("tai_lieu_id");
 
                     b.ToTable("tai_lieu_2_nguoi_dung");
-                });
-
-            modelBuilder.Entity("DATN.Domain.Entities.thong_bao", b =>
-                {
-                    b.Property<Guid>("id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<bool?>("da_xem")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<DateTime?>("ngay_chinh_sua")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("ngay_gui")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("ngay_tao")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("nguoi_chinh_sua")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("nguoi_gui")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("nguoi_nhan")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("nguoi_tao")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("noi_dung")
-                        .HasColumnType("longtext");
-
-                    b.Property<Guid?>("tai_lieu_id")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("tieu_de")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("id");
-
-                    b.ToTable("thong_bao");
                 });
 
             modelBuilder.Entity("DATN.Domain.Entities.thu_muc", b =>

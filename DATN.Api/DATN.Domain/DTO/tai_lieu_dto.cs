@@ -29,6 +29,7 @@ namespace DATN.Domain.DTO
         public DateTime? IndexedAt { get; set; }  // (ngày giờ đã index lên Elastic).
         public string? IndexStatus { get; set; } // (chưa index / thành công / lỗi).
         public Guid? thu_muc_id { get; set; } // id của folder đang lưu trữ5420
+        public bool is_access { get; set; } = true;
     }
     public class DownloadResult
     {

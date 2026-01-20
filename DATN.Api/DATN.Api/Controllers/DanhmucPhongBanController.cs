@@ -1,4 +1,5 @@
-﻿using DATN.Application.Interfaces;
+﻿using DATN.Api.Utils.Cache_service;
+using DATN.Application.Interfaces;
 using DATN.Application.Utils;
 using DATN.Domain.DTO;
 using Microsoft.AspNetCore.Authorization;
@@ -12,9 +13,11 @@ namespace DATN.Api.Controllers
     public class DanhmucPhongBanController : ControllerBase
     {
         private readonly IDanhMucPhongBan _danhMucService;
-        public DanhmucPhongBanController(IDanhMucPhongBan danhMucService)
+        private readonly IRedisCacheService _redisService;
+        public DanhmucPhongBanController(IDanhMucPhongBan danhMucService, IRedisCacheService redisService)
         {
             _danhMucService = danhMucService;
+            _redisService = redisService;
         }
 
         // GET: api/DanhMucCapDo/get-all
@@ -24,7 +27,16 @@ namespace DATN.Api.Controllers
         {
             try
             {
+                var cachedData = await _redisService.GetAsync<PaginatedList<danh_muc_dto>>("danh_muc_phong_ban." + (keySearch != null ? keySearch.ToString() : ""), (keySearch != null ? keySearch.ToString() : ""));
+                if (cachedData != null)
+                {
+                    return cachedData;
+                }
+
                 var result = await _danhMucService.Get(keySearch);
+
+                await _redisService.SetAsync("danh_muc_phong_ban." + (keySearch != null ? keySearch.ToString() : "").ToString(), (keySearch != null ? keySearch.ToString() : ""), result);
+
                 return Ok(result);
             }
             catch (Exception e)
@@ -40,7 +52,16 @@ namespace DATN.Api.Controllers
         {
             try
             {
+                var cachedData = await _redisService.GetAsync<PaginatedList<danh_muc_dto>>("danh_muc_phong_ban." + (request != null ? request : ""), (request != null ? request : ""));
+                if (cachedData != null)
+                {
+                    return cachedData;
+                }
+
                 var result = await _danhMucService.GetAll(request);
+
+                await _redisService.SetAsync("danh_muc_phong_ban." + request.ToString(), (request != null ? request : ""), result);
+
                 return Ok(result);
             }
             catch (Exception e)
@@ -74,6 +95,7 @@ namespace DATN.Api.Controllers
             try
             {
                 var result = await _danhMucService.Create(request);
+                await _redisService.ClearByModuleAsync("danh_muc_phong_ban.");
                 return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
             }
             catch (Exception e)
@@ -93,6 +115,9 @@ namespace DATN.Api.Controllers
             {
                 var result = await _danhMucService.Update(request);
                 if (result == null) return NotFound("Không tìm thấy bản ghi để cập nhật!");
+
+                await _redisService.ClearByModuleAsync("danh_muc_phong_ban.");
+
                 return Ok(result);
             }
             catch (Exception e)
@@ -110,6 +135,8 @@ namespace DATN.Api.Controllers
             {
                 var success = await _danhMucService.Delete(id);
                 if (!success) return NotFound("Không tìm thấy bản ghi để xóa!");
+
+                await _redisService.ClearByModuleAsync("danh_muc_phong_ban.");
                 return NoContent();
             }
             catch (Exception e)
@@ -127,6 +154,8 @@ namespace DATN.Api.Controllers
             {
                 var success = await _danhMucService.DeleteAny(data.Ids);
                 if (!success) return NotFound("Không tìm thấy bản ghi để xóa!");
+
+                await _redisService.ClearByModuleAsync("danh_muc_phong_ban.");
                 return NoContent();
             }
             catch (Exception e)

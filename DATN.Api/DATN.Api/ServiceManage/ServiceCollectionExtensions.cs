@@ -14,6 +14,8 @@ using DATN.Application.TaiLieu;
 using Nest;
 using DATN.Infrastructure.Data;
 using DATN.Application.CauHinhFile;
+using DATN.Api.Utils.Cache_service;
+using DATN.Application.ThongBao;
 
 namespace DATN.Api.ServiceManage
 {
@@ -38,6 +40,9 @@ namespace DATN.Api.ServiceManage
             services.AddTransient<IThuMucService, ThuMucService>();
             services.AddTransient<ITaiLieuService, TaiLieuService>();
             services.AddTransient<ICauHinhFile, CauhinhFileService>();
+            services.AddTransient<IThongBaoService, ThongBaoService>();
+            //services.AddScoped<IRedisCacheService, RedisCacheService>();
+            //services.AddScoped<IMemoryCacheService, MemoryCacheService>();
 
             return services;
         }

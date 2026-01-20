@@ -1,4 +1,5 @@
-﻿using DATN.Application.Interfaces;
+﻿using DATN.Api.Utils.Cache_service;
+using DATN.Application.Interfaces;
 using DATN.Application.Utils;
 using DATN.Domain.DTO;
 using Microsoft.AspNetCore.Authorization;
@@ -12,9 +13,12 @@ namespace DATN.Api.Controllers
     public class DanhMucCapDoController : ControllerBase
     {
         private readonly IDanhMucCapDo _danhMucCapDoService;
-        public DanhMucCapDoController(IDanhMucCapDo danhMucCapDoService)
+        private readonly IRedisCacheService _redisService;
+
+        public DanhMucCapDoController(IDanhMucCapDo danhMucCapDoService, IRedisCacheService redisService)
         {
             _danhMucCapDoService = danhMucCapDoService;
+            _redisService = redisService;
         }
 
         // GET: api/DanhMucCapDo/get-all
@@ -24,7 +28,16 @@ namespace DATN.Api.Controllers
         {
             try
             {
+                var cachedData = await _redisService.GetAsync<PaginatedList<danh_muc_dto>>("danh_muc_cap_do." + (request != null ? request : ""), (request != null ? request : ""));
+                if (cachedData != null)
+                {
+                    return cachedData;
+                }
+
                 var result = await _danhMucCapDoService.GetAll(request);
+
+                await _redisService.SetAsync("danh_muc_cap_do." + request.ToString(), (request != null ? request : ""), result);
+
                 return Ok(result);
             }
             catch (Exception e)
@@ -58,6 +71,8 @@ namespace DATN.Api.Controllers
             try
             {
                 var result = await _danhMucCapDoService.Create(request);
+                await _redisService.ClearByModuleAsync("danh_muc_cap_do.");
+
                 return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
             }
             catch (Exception e)
@@ -77,6 +92,8 @@ namespace DATN.Api.Controllers
             {
                 var result = await _danhMucCapDoService.Update(request);
                 if (result == null) return NotFound("Không tìm thấy bản ghi để cập nhật!");
+
+                await _redisService.ClearByModuleAsync("danh_muc_cap_do.");
                 return Ok(result);
             }
             catch (Exception e)
@@ -94,6 +111,8 @@ namespace DATN.Api.Controllers
             {
                 var success = await _danhMucCapDoService.Delete(id);
                 if (!success) return NotFound("Không tìm thấy bản ghi để xóa!");
+
+                await _redisService.ClearByModuleAsync("danh_muc_cap_do.");
                 return NoContent();
             }
             catch (Exception e)
@@ -111,6 +130,8 @@ namespace DATN.Api.Controllers
             {
                 var success = await _danhMucCapDoService.DeleteAny(data.Ids);
                 if (!success) return NotFound("Không tìm thấy bản ghi để xóa!");
+
+                await _redisService.ClearByModuleAsync("danh_muc_cap_do.");
                 return NoContent();
             }
             catch (Exception e)

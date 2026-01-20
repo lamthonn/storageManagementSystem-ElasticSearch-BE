@@ -38,4 +38,8 @@
     <ProjectReference Include="..\DATN.Infrastructure\DATN.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Utils\cache_service\" />
+  </ItemGroup>
+
 </Project>

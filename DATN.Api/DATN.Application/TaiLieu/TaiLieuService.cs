@@ -69,7 +69,7 @@ namespace DATN.Application.TaiLieu
                 var userInfor = _context.nguoi_dung.FirstOrDefault(x => x.tai_khoan == currentUser);
                 var folderPath = Path.Combine(rootPath, currentUser, secret);
                 var mucDo = _context.danh_muc.FirstOrDefault(x => x.Id == request.cap_do_id);
-                var mucDoNum = mucDo?.ma == "tuyet-mat" ? 3 : (mucDo?.ma == "toi-mat" ? 2 : 1);
+                var mucDoNum = mucDo?.ma == "tuyet-mat" ? 3 : (mucDo?.ma == "toi-mat" ? 2 : (mucDo?.ma == "cong-khai" ? 0 : 1));
                 // chưa có thư mục thì tạo mới
                 if (!Directory.Exists(folderPath))
                 {
@@ -134,10 +134,14 @@ namespace DATN.Application.TaiLieu
                         // mỗi file 1 cặp key ECC
                         var outputFile = HybridEncryption.EncryptFileToStoring(filePath, folderPath, pbKeyName);
                     }
-                    else // mật
+                    else if (mucDoNum == 1) // mật
                     {
                         // sử dụng key chung
                         var outputFile = HybridEncryption.EncryptFileToStoring(filePath, folderPath, null);
+                    }
+                    else //công khai
+                    {
+
                     }
 
                     // B4: xóa file gốc
@@ -301,6 +305,7 @@ namespace DATN.Application.TaiLieu
             }
         }
 
+
         public async Task<PaginatedList<tai_lieu_dto>> GetTaiLieuByPhanQuyen(tai_lieu_dto request)
         {
             try
@@ -367,6 +372,7 @@ namespace DATN.Application.TaiLieu
                         ngay_chinh_sua = x.ngay_chinh_sua,
                         nguoi_chinh_sua = x.nguoi_chinh_sua,
                         htmlContent = x.htmlContent,
+                        is_access = x.nguoi_tao == currentUser || ShareData.Contains(x.Id),
                     });
                     var result = await PaginatedList<tai_lieu_dto>.Create(datasDto, request.pageNumber, request.pageSize);
 
@@ -1603,7 +1609,8 @@ namespace DATN.Application.TaiLieu
                         dsAdd.Add(new tai_lieu_2_nguoi_dung
                         {
                             tai_lieu_id = request.tai_lieu_id, // thay bằng id tài liệu của bạn
-                            nguoi_dung_id = id
+                            nguoi_dung_id = id,
+                            isAccess = true,
                         });
                     }
 
@@ -1711,7 +1718,6 @@ namespace DATN.Application.TaiLieu
                 throw new Exception($"Lỗi khi đổi tên tài liệu: {ex.Message}");
             }
         }
-
 
         public async Task<string> DeleteDocs(Guid id)
         {
@@ -2046,5 +2052,6 @@ namespace DATN.Application.TaiLieu
                 throw new Exception(ex.Message);
             }
         }
+
     }
 }

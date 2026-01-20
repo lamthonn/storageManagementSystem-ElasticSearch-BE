@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.FileProviders;
+using DATN.Api.Utils.Cache_service;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +31,21 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 builder.Services.AddApplicationServices();
+
+var redisConfig = builder.Configuration.GetSection("Redis").Get<RedisConfig>();
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = new ConfigurationOptions
+    {
+        EndPoints = { $"{redisConfig.Host}:{redisConfig.Port}" },  
+        Password = redisConfig.Pwd, // Optional
+        AbortOnConnectFail = false
+    };
+    return ConnectionMultiplexer.Connect(configuration);
+});
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IMemoryCacheService, MemoryCacheService>();
+builder.Services.AddSingleton<IRedisCacheService, RedisCacheService>();
 
 //CORS
 builder.Services.AddCors(options =>

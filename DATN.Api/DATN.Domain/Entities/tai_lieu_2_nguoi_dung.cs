@@ -13,6 +13,7 @@ namespace DATN.Domain.Entities
         public Guid Id { get; set; }
         public Guid tai_lieu_id { get; set; }
         public Guid nguoi_dung_id { get; set; }
+        public bool isAccess { get; set; }
         [ForeignKey(nameof(nguoi_dung_id))]
         public virtual nguoi_dung nguoi_dung { get; set; }
         [ForeignKey(nameof(tai_lieu_id))]
