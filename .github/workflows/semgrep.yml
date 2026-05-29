@@ -1,0 +1,30 @@
+# .github/workflows/semgrep.yml
+name: Semgrep
+
+on:
+  pull_request: {}                        # diff-aware scan: chỉ quét file thay đổi
+  push:
+    branches: ["main", "master"]          # full scan khi merge vào main
+  workflow_dispatch: {}                   # chạy thủ công khi cần
+  schedule:
+    - cron: '0 2 * * 1'                   # full scan mỗi thứ Hai 2:00 AM
+
+permissions:
+  contents: read
+  security-events: write                  # cần để upload SARIF lên GitHub Security tab
+
+jobs:
+  semgrep:
+    name: semgrep/ci
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep              # image chính thức, không đổi
+    if: github.actor != 'dependabot[bot]'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        run: semgrep ci
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
