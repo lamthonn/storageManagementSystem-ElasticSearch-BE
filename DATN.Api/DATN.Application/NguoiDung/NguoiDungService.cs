@@ -31,6 +31,12 @@ namespace DATN.Application.NguoiDung
         {
             try
             {
+                var currentUser = _helper.GetUserInfo().userName ?? "anonymous";
+                var userInfor = _context.nguoi_dung.FirstOrDefault(x => x.tai_khoan == currentUser);
+                // lấy tất cả phòng ban của người đăng nhập
+
+
+                
                 var dsNguoiDung = _context.nguoi_dung.AsNoTracking();
 
                 if (keySearch != null)

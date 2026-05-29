@@ -3,6 +3,7 @@ using DATN.Application.Utils;
 using DATN.Domain.DTO;
 using DATN.Domain.Entities;
 using DATN.Infrastructure.Data;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Nest;
@@ -102,6 +103,9 @@ namespace DATN.Application.ThuMuc
                 _context.thu_muc.Remove(thuMuc);
                 await _context.SaveChangesAsync();
 
+                //xóa thư mục trong ES
+                await _client.DeleteAsync<thu_muc>(id, d => d.Index("thu_muc"));
+
                 // Ghi log
                 await _logger.AddLog(new nhat_ky_he_thong_dto
                 {
@@ -144,6 +148,7 @@ namespace DATN.Application.ThuMuc
 
                 // Xóa thư mục con sau khi đã xóa toàn bộ cấp con của nó
                 _context.thu_muc.Remove(thuMucCon);
+                await _client.DeleteAsync<thu_muc>(thuMucCon.id, d => d.Index("thu_muc"));
             }
 
             // Lưu sau mỗi cấp để tránh lỗi quan hệ khóa ngoại

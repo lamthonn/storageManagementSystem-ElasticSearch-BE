@@ -3,16 +3,28 @@
   "WorkspaceRootPath": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|c:\\users\\admin\\desktop\\\u0111\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\coding\\datn_api\\datn.api\\datn.application\\utils\\algorithm.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|solutionrelative:datn.application\\utils\\algorithm.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|c:\\users\\admin\\desktop\\\u0111\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\coding\\datn_api\\datn.api\\datn.application\\nguoidung\\nguoidungservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|solutionrelative:datn.application\\nguoidung\\nguoidungservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|c:\\users\\admin\\desktop\\\u0111\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\coding\\datn_api\\datn.api\\datn.application\\utils\\utils.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|solutionrelative:datn.application\\utils\\utils.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|c:\\users\\admin\\desktop\\\u0111\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\coding\\datn_api\\datn.api\\datn.application\\tailieu\\tailieuservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|solutionrelative:datn.application\\tailieu\\tailieuservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|c:\\users\\admin\\desktop\\\u0111\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\coding\\datn_api\\datn.api\\datn.application\\thongbao\\thongbaoservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|solutionrelative:datn.application\\thongbao\\thongbaoservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5380B832-13D6-4C0E-823F-5CA66B99DF58}|DATN.Api\\DATN.Api.csproj|c:\\users\\admin\\desktop\\\u0111\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\coding\\datn_api\\datn.api\\datn.api\\controllers\\nguoidungcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5380B832-13D6-4C0E-823F-5CA66B99DF58}|DATN.Api\\DATN.Api.csproj|solutionrelative:datn.api\\controllers\\nguoidungcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|c:\\users\\admin\\desktop\\\u0111\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\coding\\datn_api\\datn.api\\datn.application\\thumuc\\thumucservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{89F2519E-03CB-4AD7-9517-5072B1DB8884}|DATN.Application\\DATN.Application.csproj|solutionrelative:datn.application\\thumuc\\thumucservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5380B832-13D6-4C0E-823F-5CA66B99DF58}|DATN.Api\\DATN.Api.csproj|c:\\users\\admin\\desktop\\\u0111\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\coding\\datn_api\\datn.api\\datn.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{5380B832-13D6-4C0E-823F-5CA66B99DF58}|DATN.Api\\DATN.Api.csproj|solutionrelative:datn.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,50 +34,80 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Utils.cs",
-              "DocumentMoniker": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\Utils\\Utils.cs",
-              "RelativeDocumentMoniker": "DATN.Application\\Utils\\Utils.cs",
-              "ToolTip": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\Utils\\Utils.cs",
-              "RelativeToolTip": "DATN.Application\\Utils\\Utils.cs",
-              "ViewState": "AQIAAIQAAAAAAAAAAAAAAJYAAAAIAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-23T15:49:36.659Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Algorithm.cs",
-              "DocumentMoniker": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\Utils\\Algorithm.cs",
-              "RelativeDocumentMoniker": "DATN.Application\\Utils\\Algorithm.cs",
-              "ToolTip": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\Utils\\Algorithm.cs",
-              "RelativeToolTip": "DATN.Application\\Utils\\Algorithm.cs",
-              "ViewState": "AQIAADsAAAAAAAAAAAAUwGIAAAAUAAAA",
+              "Title": "NguoiDungService.cs",
+              "DocumentMoniker": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\NguoiDung\\NguoiDungService.cs",
+              "RelativeDocumentMoniker": "DATN.Application\\NguoiDung\\NguoiDungService.cs",
+              "ToolTip": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\NguoiDung\\NguoiDungService.cs",
+              "RelativeToolTip": "DATN.Application\\NguoiDung\\NguoiDungService.cs",
+              "ViewState": "AQIAAAEAAAAAAAAAAAAIwCMAAAAdAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-23T15:45:48.717Z",
+              "WhenOpened": "2026-01-21T09:35:47.16Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
+              "Title": "NguoiDungController.cs",
+              "DocumentMoniker": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Api\\Controllers\\NguoiDungController.cs",
+              "RelativeDocumentMoniker": "DATN.Api\\Controllers\\NguoiDungController.cs",
+              "ToolTip": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Api\\Controllers\\NguoiDungController.cs",
+              "RelativeToolTip": "DATN.Api\\Controllers\\NguoiDungController.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABoAAAA8AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-21T09:35:44.332Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
               "Title": "ThuMucService.cs",
               "DocumentMoniker": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\ThuMuc\\ThuMucService.cs",
               "RelativeDocumentMoniker": "DATN.Application\\ThuMuc\\ThuMucService.cs",
               "ToolTip": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\ThuMuc\\ThuMucService.cs",
               "RelativeToolTip": "DATN.Application\\ThuMuc\\ThuMucService.cs",
-              "ViewState": "AQIAAEcAAAAAAAAAAAAQwHEAAAAZAAAA",
+              "ViewState": "AQIAAIAAAAAAAAAAAAAwwJYAAAA/AAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-20T14:50:56.658Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-01-21T07:40:24.306Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Api\\appsettings.json",
+              "RelativeDocumentMoniker": "DATN.Api\\appsettings.json",
+              "ToolTip": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Api\\appsettings.json",
+              "RelativeToolTip": "DATN.Api\\appsettings.json",
+              "ViewState": "AQIAADwAAAAAAAAAAAAAABMAAAAEAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-01-21T03:27:38.318Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ThongBaoService.cs",
+              "DocumentMoniker": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\ThongBao\\ThongBaoService.cs",
+              "RelativeDocumentMoniker": "DATN.Application\\ThongBao\\ThongBaoService.cs",
+              "ToolTip": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\ThongBao\\ThongBaoService.cs",
+              "RelativeToolTip": "DATN.Application\\ThongBao\\ThongBaoService.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAGcAAABsAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-20T14:18:08.638Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "TaiLieuService.cs",
+              "DocumentMoniker": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\TaiLieu\\TaiLieuService.cs",
+              "RelativeDocumentMoniker": "DATN.Application\\TaiLieu\\TaiLieuService.cs",
+              "ToolTip": "C:\\Users\\ADMIN\\Desktop\\\u0110\u1ED3 \u00E1n t\u1ED1t nghi\u1EC7p\\Coding\\DATN_API\\DATN.Api\\DATN.Application\\TaiLieu\\TaiLieuService.cs",
+              "RelativeToolTip": "DATN.Application\\TaiLieu\\TaiLieuService.cs",
+              "ViewState": "AQIAACgAAAAAAAAAAAAgwDwBAACSAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-13T08:05:45.408Z"
             }
           ]
         }

@@ -3,7 +3,6 @@ C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.In
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Infrastructure\obj\Debug\net8.0\DATN.Infrastructure.AssemblyInfoInputs.cache
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Infrastructure\obj\Debug\net8.0\DATN.Infrastructure.AssemblyInfo.cs
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Infrastructure\obj\Debug\net8.0\DATN.Infrastructure.csproj.CoreCompileInputs.cache
-C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Infrastructure\obj\Debug\net8.0\DATN.Infrastructure.sourcelink.json
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Infrastructure\bin\Debug\net8.0\DATN.Infrastructure.deps.json
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Infrastructure\bin\Debug\net8.0\DATN.Infrastructure.runtimeconfig.json
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Infrastructure\bin\Debug\net8.0\DATN.Infrastructure.dll
@@ -16,3 +15,4 @@ C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.In
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Infrastructure\obj\Debug\net8.0\DATN.Infrastructure.pdb
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Infrastructure\obj\Debug\net8.0\DATN.Infrastructure.genruntimeconfig.cache
 C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Infrastructure\obj\Debug\net8.0\ref\DATN.Infrastructure.dll
+C:\Users\ADMIN\Desktop\Đồ án tốt nghiệp\Coding\DATN_API\DATN.Api\DATN.Infrastructure\obj\Debug\net8.0\DATN.Infrastructure.sourcelink.json

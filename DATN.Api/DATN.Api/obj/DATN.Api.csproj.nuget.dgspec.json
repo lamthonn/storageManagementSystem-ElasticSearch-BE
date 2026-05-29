@@ -60,6 +60,10 @@
               "target": "Package",
               "version": "[2.19.0, )"
             },
+            "Elasticsearch.Net": {
+              "target": "Package",
+              "version": "[7.17.4, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[8.0.19, )"
@@ -79,6 +83,10 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[8.0.19, )"
+            },
+            "NEST": {
+              "target": "Package",
+              "version": "[7.17.4, )"
             },
             "Newtonsoft.Json": {
               "target": "Package",
@@ -107,6 +115,10 @@
             "Serilog.Sinks.PeriodicBatching": {
               "target": "Package",
               "version": "[5.0.0, )"
+            },
+            "StackExchange.Redis": {
+              "target": "Package",
+              "version": "[2.10.1, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
@@ -189,6 +201,14 @@
               "target": "Package",
               "version": "[2.19.0, )"
             },
+            "Elasticsearch.Net": {
+              "target": "Package",
+              "version": "[7.17.4, )"
+            },
+            "HtmlAgilityPack": {
+              "target": "Package",
+              "version": "[1.12.4, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[8.0.19, )"
@@ -208,6 +228,10 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[8.0.19, )"
+            },
+            "NEST": {
+              "target": "Package",
+              "version": "[7.17.4, )"
             },
             "Newtonsoft.Json": {
               "target": "Package",
@@ -236,6 +260,10 @@
             "Serilog.Sinks.PeriodicBatching": {
               "target": "Package",
               "version": "[5.0.0, )"
+            },
+            "SixLabors.ImageSharp": {
+              "target": "Package",
+              "version": "[3.1.12, )"
             }
           },
           "imports": [
@@ -402,6 +430,10 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[8.0.19, )"
+            },
+            "NEST": {
+              "target": "Package",
+              "version": "[7.17.4, )"
             },
             "Pomelo.EntityFrameworkCore.MySql": {
               "target": "Package",

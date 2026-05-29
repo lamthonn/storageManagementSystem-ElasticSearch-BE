@@ -149,6 +149,10 @@
               "target": "Package",
               "version": "[8.0.19, )"
             },
+            "NEST": {
+              "target": "Package",
+              "version": "[7.17.4, )"
+            },
             "Pomelo.EntityFrameworkCore.MySql": {
               "target": "Package",
               "version": "[8.0.3, )"
