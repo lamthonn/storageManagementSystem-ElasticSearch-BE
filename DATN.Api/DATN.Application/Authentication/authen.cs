@@ -119,7 +119,7 @@ namespace DATN.Application.Authentication
                         // Tạo lại hash mật khẩu từ mật khẩu người dùng nhập vào và salt trong DB
                         var salt = Convert.FromBase64String(user.salt_code!); // Salt đã lưu trong DB
                         var hashedPassword = _hepper.GetPBKDF2(request.mat_khau, salt);
-                        if (hashedPassword == user.mat_khau)
+                        if (hashedPassword == password)
                         {
                             var jwtToken = _hepper.GenerateJwtToken(user);
                             var refreshToken = _hepper.GenerateRefreshToken();
