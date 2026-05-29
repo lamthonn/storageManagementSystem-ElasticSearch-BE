@@ -113,7 +113,6 @@ namespace DATN.Application.Authentication
                 if (!string.IsNullOrEmpty(request.tai_khoan) || !string.IsNullOrEmpty(request.mat_khau))
                 {
                     var user = _context.nguoi_dung.FirstOrDefault(x => x.tai_khoan == request.tai_khoan);
-                    var query = "SELECT * FROM Users WHERE Name = '" + request.tai_khoan+ "'"; SqlConnection conn = new SqlConnection("Server=test;Database=db;"); SqlCommand cmd = new SqlCommand(query, conn);
 
                     if (user != null)
                     {
